@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Living Learning World</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Nunito',sans-serif;background:#FFF6EE;color:#2C1810;}
+#root{height:100vh;overflow:hidden;}
+button{cursor:pointer;border:none;background:none;font-family:'Nunito',sans-serif;}
+textarea,input,select{font-family:'Nunito',sans-serif;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:#E0CFC8;border-radius:3px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+@keyframes celebrate{0%{transform:scale(1) rotate(0deg);}25%{transform:scale(1.25) rotate(-6deg);}50%{transform:scale(1.25) rotate(6deg);}75%{transform:scale(1.1) rotate(-3deg);}100%{transform:scale(1) rotate(0deg);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.7;}}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes pop{0%{transform:scale(1);}40%{transform:scale(1.35);}100%{transform:scale(1);}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useMemo,useCallback}=React;
+
+/* ─── RESPONSIVE HOOK ─── */
+function useW(){
+  const [w,setW]=useState(window.innerWidth);
+  useEffect(()=>{const h=()=>setW(window.innerWidth);window.addEventListener('resize',h);return()=>window.removeEventListener('resize',h);},[]);
+  return w;
+}
+
+/* ─── THEME ─── */
+const C={bg:'#FFF6EE',card:'#FFFFFF',green:'#5BB894',greenL:'#E8F7F2',coral:'#F4845F',coralL:'#FEF0EC',purple:'#9B8EC4',purpleL:'#F0EDF9',yellow:'#F9C74F',yellowL:'#FEF9E7',blue:'#5DADE2',blueL:'#EBF5FB',pink:'#F06292',pinkL:'#FCE4EC',text:'#2C1810',soft:'#7A5C52',border:'#EDE0D8'};
+
+function speak(t){if(!('speechSynthesis' in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=.88;u.pitch=1.05;u.volume=1;window.speechSynthesis.speak(u);}
+
+/* ─── DATA ─── */
+const ROLES=[
+  {id:'bcba',label:'BCBA',sub:'Supervisor',emoji:'🎓',color:C.purple,light:C.purpleL},
+  {id:'rbt',label:'RBT',sub:'Therapist',emoji:'⭐',color:C.green,light:C.greenL},
+  {id:'parent',label:'Parent',sub:'Caregiver',emoji:'🏠',color:C.coral,light:C.coralL},
+  {id:'teacher',label:'Teacher',sub:'Educator',emoji:'📚',color:C.blue,light:C.blueL},
+];
+const CATS=[
+  {id:'colors',label:'Colors',emoji:'🎨',color:C.coral,items:[{id:'red',label:'Red',emoji:'🔴'},{id:'blue',label:'Blue',emoji:'🔵'},{id:'green',label:'Green',emoji:'🟢'},{id:'yellow',label:'Yellow',emoji:'🟡'},{id:'purple',label:'Purple',emoji:'🟣'},{id:'orange',label:'Orange',emoji:'🟠'}]},
+  {id:'animals',label:'Animals',emoji:'🐾',color:C.green,items:[{id:'dog',label:'Dog',emoji:'🐶'},{id:'cat',label:'Cat',emoji:'🐱'},{id:'bird',label:'Bird',emoji:'🐦'},{id:'fish',label:'Fish',emoji:'🐟'},{id:'rabbit',label:'Rabbit',emoji:'🐰'},{id:'elephant',label:'Elephant',emoji:'🐘'}]},
+  {id:'foods',label:'Foods',emoji:'🍎',color:C.yellow,items:[{id:'apple',label:'Apple',emoji:'🍎'},{id:'banana',label:'Banana',emoji:'🍌'},{id:'pizza',label:'Pizza',emoji:'🍕'},{id:'milk',label:'Milk',emoji:'🥛'},{id:'cookie',label:'Cookie',emoji:'🍪'},{id:'sandwich',label:'Sandwich',emoji:'🥪'}]},
+  {id:'clothes',label:'Clothes',emoji:'👕',color:C.purple,items:[{id:'shirt',label:'Shirt',emoji:'👕'},{id:'pants',label:'Pants',emoji:'👖'},{id:'shoes',label:'Shoes',emoji:'👟'},{id:'hat',label:'Hat',emoji:'🎩'},{id:'socks',label:'Socks',emoji:'🧦'},{id:'dress',label:'Dress',emoji:'👗'}]},
+  {id:'body',label:'Body Parts',emoji:'🫁',color:C.blue,items:[{id:'eyes',label:'Eyes',emoji:'👀'},{id:'ears',label:'Ears',emoji:'👂'},{id:'nose',label:'Nose',emoji:'👃'},{id:'mouth',label:'Mouth',emoji:'👄'},{id:'hands',label:'Hands',emoji:'🙌'},{id:'feet',label:'Feet',emoji:'🦶'}]},
+  {id:'objects',label:'Objects',emoji:'🧸',color:C.pink,items:[{id:'ball',label:'Ball',emoji:'⚽'},{id:'book',label:'Book',emoji:'📚'},{id:'cup',label:'Cup',emoji:'🥤'},{id:'chair',label:'Chair',emoji:'🪑'},{id:'car',label:'Car',emoji:'🚗'},{id:'phone',label:'Phone',emoji:'📱'}]},
+];
+const ACTS=[
+  {id:'work',label:'Work Time',emoji:'📚',color:C.blue},{id:'play',label:'Play',emoji:'🎮',color:C.yellow},
+  {id:'snack',label:'Snack',emoji:'🍎',color:C.coral},{id:'break',label:'Break',emoji:'😌',color:C.green},
+  {id:'outside',label:'Outside',emoji:'🌳',color:C.green},{id:'art',label:'Art Time',emoji:'🎨',color:C.pink},
+  {id:'music',label:'Music',emoji:'🎵',color:C.purple},{id:'lunch',label:'Lunch',emoji:'🥪',color:C.yellow},
+  {id:'circle',label:'Circle Time',emoji:'⭕',color:C.blue},{id:'clean',label:'Clean Up',emoji:'🧹',color:C.green},
+  {id:'wash',label:'Wash Hands',emoji:'🤲',color:C.blue},{id:'potty',label:'Potty Break',emoji:'🚽',color:C.coral},
+];
+const ROOMS=[
+  {id:'kitchen',label:'Kitchen',emoji:'🍳',color:C.yellow,items:[{id:'fridge',label:'Refrigerator',emoji:'🧊'},{id:'stove',label:'Stove',emoji:'🫕'},{id:'table',label:'Table',emoji:'🪑'},{id:'sink',label:'Sink',emoji:'🚰'},{id:'cup',label:'Cup',emoji:'🥤'},{id:'plate',label:'Plate',emoji:'🍽️'}]},
+  {id:'bedroom',label:'Bedroom',emoji:'🛏️',color:C.purple,items:[{id:'bed',label:'Bed',emoji:'🛏️'},{id:'pillow',label:'Pillow',emoji:'🪆'},{id:'lamp',label:'Lamp',emoji:'💡'},{id:'closet',label:'Closet',emoji:'🚪'},{id:'blanket',label:'Blanket',emoji:'🛌'},{id:'bk',label:'Book',emoji:'📖'}]},
+  {id:'living',label:'Living Room',emoji:'🛋️',color:C.blue,items:[{id:'sofa',label:'Sofa',emoji:'🛋️'},{id:'tv',label:'Television',emoji:'📺'},{id:'toys',label:'Toys',emoji:'🧸'},{id:'window',label:'Window',emoji:'🪟'},{id:'door',label:'Door',emoji:'🚪'},{id:'plant',label:'Plant',emoji:'🌿'}]},
+  {id:'bathroom',label:'Bathroom',emoji:'🚿',color:C.green,items:[{id:'toilet',label:'Toilet',emoji:'🚽'},{id:'sink2',label:'Sink',emoji:'🚰'},{id:'towel',label:'Towel',emoji:'🧴'},{id:'soap',label:'Soap',emoji:'🧼'},{id:'toothbrush',label:'Toothbrush',emoji:'🪥'},{id:'bath',label:'Bathtub',emoji:'🛁'}]},
+  {id:'playroom',label:'Play Room',emoji:'🎮',color:C.coral,items:[{id:'blocks',label:'Blocks',emoji:'🧱'},{id:'ball2',label:'Ball',emoji:'⚽'},{id:'puzzle',label:'Puzzle',emoji:'🧩'},{id:'crayons',label:'Crayons',emoji:'🖍️'},{id:'train',label:'Train',emoji:'🚂'},{id:'doll',label:'Doll',emoji:'🪆'}]},
+];
+
+/* ─── HEADER ─── */
+function Hdr({title,onBack,color,right}){
+  const tb=useW()>=768;
+  return(
+    <div style={{display:'flex',alignItems:'center',padding:tb?'16px 28px':'14px 16px',background:C.card,borderBottom:`1px solid ${C.border}`,gap:12,flexShrink:0}}>
+      {onBack&&<button onClick={onBack} style={{width:tb?50:44,height:tb?50:44,borderRadius:'50%',background:C.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:tb?22:20,flexShrink:0}}>←</button>}
+      <span style={{fontWeight:800,fontSize:tb?24:20,color:color||C.text,flex:1}}>{title}</span>
+      {right}
+    </div>
+  );
+}
+
+/* ─── SPLASH ─── */
+function Splash({onSelect}){
+  const [sel,setSel]=useState(null);const [going,setGoing]=useState(false);
+  const tb=useW()>=768;
+  function go(){if(!sel)return;setGoing(true);setTimeout(()=>onSelect(sel),450);}
+  return(
+    <div style={{height:'100vh',background:C.bg,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:tb?'40px 48px':'24px 20px',gap:tb?36:28}}>
+      <div style={{textAlign:'center',animation:'slideUp .5s ease'}}>
+        <div style={{fontSize:tb?80:62,marginBottom:12,display:'inline-block',animation:'bounce 2.5s ease infinite'}}>🌍</div>
+        <h1 style={{fontSize:tb?46:32,fontWeight:900,color:C.text,lineHeight:1.1}}>Living Learning<br/><span style={{color:C.green}}>World</span></h1>
+        <p style={{fontSize:tb?17:14,color:C.soft,marginTop:10,fontWeight:600}}>ABA-powered support for every environment</p>
+      </div>
+      <div style={{width:'100%',maxWidth:tb?660:400}}>
+        <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:14,textAlign:'center',letterSpacing:1.2,textTransform:'uppercase'}}>Who are you today?</p>
+        <div style={{display:'grid',gridTemplateColumns:tb?'repeat(4,1fr)':'repeat(2,1fr)',gap:tb?14:10}}>
+          {ROLES.map((r,i)=>(
+            <button key={r.id} onClick={()=>setSel(r)} style={{background:sel?.id===r.id?r.light:C.card,borderRadius:22,padding:tb?'24px 16px':'18px 12px',border:`2.5px solid ${sel?.id===r.id?r.color:C.border}`,display:'flex',flexDirection:'column',alignItems:'center',gap:8,transform:sel?.id===r.id?'scale(1.04)':'scale(1)',transition:'all .2s ease',cursor:'pointer',animation:`fadeIn .4s ease ${i*.08}s both`,boxShadow:sel?.id===r.id?`0 4px 18px ${r.color}30`:'none'}}>
+              <span style={{fontSize:tb?44:36}}>{r.emoji}</span>
+              <span style={{fontWeight:800,fontSize:tb?18:16,color:sel?.id===r.id?r.color:C.text}}>{r.label}</span>
+              <span style={{fontSize:tb?13:11,color:C.soft}}>{r.sub}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <button onClick={go} disabled={!sel} style={{background:sel?sel.color:C.border,color:'white',borderRadius:20,padding:tb?'20px 0':'16px 0',fontWeight:900,fontSize:tb?22:18,width:'100%',maxWidth:tb?660:400,animation:sel&&!going?'pulse 1.8s ease infinite':'none',opacity:going?.8:1,transition:'all .25s ease'}}>{going?'✨ Entering...':'Let\'s Go! →'}</button>
+    </div>
+  );
+}
+
+/* ─── DASHBOARD ─── */
+function Dashboard({role,onNav}){
+  const tb=useW()>=768;
+  const modes=[
+    {id:'learn',label:'Learn Mode',sub:'Colors · Animals · Foods · More',emoji:'📖',color:C.green,light:C.greenL},
+    {id:'firstthen',label:'First / Then',sub:'Visual schedules & timers',emoji:'📋',color:C.coral,light:C.coralL},
+    {id:'miniworld',label:'Mini World',sub:'Explore the Home environment',emoji:'🏠',color:C.purple,light:C.purpleL},
+  ];
+  const tools=[
+    {id:'datanotes',label:'Data Notes',emoji:'📊',color:C.blue,light:C.blueL},
+    {id:'timer',label:'Timer',emoji:'⏱️',color:C.yellow,light:C.yellowL},
+    {id:'goals',label:'Goals',emoji:'🎯',color:C.pink,light:C.pinkL},
+    {id:'settings',label:'Settings',emoji:'⚙️',color:C.soft,light:'#F5F0ED'},
+  ];
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column',background:C.bg}}>
+      <div style={{padding:tb?'22px 28px 16px':'18px 20px 14px',background:C.card,borderBottom:`1px solid ${C.border}`}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div>
+            <h1 style={{fontSize:tb?28:23,fontWeight:900,color:C.text}}>Hello! 👋</h1>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginTop:4}}>
+              <span style={{fontSize:tb?16:13}}>{role.emoji}</span>
+              <span style={{fontSize:tb?16:13,color:role.color,fontWeight:800}}>{role.label}</span>
+            </div>
+          </div>
+          <button onClick={()=>onNav('upload')} style={{background:role.light,borderRadius:16,padding:tb?'10px 20px':'8px 14px',fontWeight:700,fontSize:tb?15:13,color:role.color,display:'flex',alignItems:'center',gap:6}}>📷 My Content</button>
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:'auto',padding:tb?'20px 24px':18,display:'flex',flexDirection:'column',gap:20}}>
+        {/* Learning Modes */}
+        <div>
+          <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:12,letterSpacing:1.2,textTransform:'uppercase'}}>Learning Modes</p>
+          <div style={{display:'grid',gridTemplateColumns:tb?'repeat(3,1fr)':'1fr',gap:tb?16:12}}>
+            {modes.map((m,i)=>(
+              <button key={m.id} onClick={()=>onNav(m.id)} style={{background:m.light,borderRadius:24,padding:tb?'24px 20px':'18px 18px',display:'flex',flexDirection:tb?'column':'row',alignItems:tb?'flex-start':'center',gap:tb?14:16,border:`2px solid ${m.color}30`,textAlign:'left',cursor:'pointer',animation:`slideUp .35s ease ${i*.1}s both`,boxShadow:`0 4px 18px ${m.color}18`}}>
+                <div style={{width:tb?66:56,height:tb?66:56,borderRadius:20,background:m.color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:tb?30:26,flexShrink:0}}>{m.emoji}</div>
+                <div style={{flex:1}}>
+                  <p style={{fontWeight:900,fontSize:tb?20:18,color:C.text,marginBottom:3}}>{m.label}</p>
+                  <p style={{fontSize:tb?14:12,color:C.soft}}>{m.sub}</p>
+                </div>
+                {!tb&&<span style={{fontSize:22,color:m.color,opacity:.7}}>›</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Quick Tools */}
+        <div>
+          <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:12,letterSpacing:1.2,textTransform:'uppercase'}}>Quick Tools</p>
+          <div style={{display:'grid',gridTemplateColumns:tb?'repeat(4,1fr)':'repeat(2,1fr)',gap:tb?14:10}}>
+            {tools.map((t,i)=>(
+              <button key={t.id} onClick={()=>onNav(t.id)} style={{background:t.light,borderRadius:20,padding:tb?'20px 16px':'16px 14px',display:'flex',flexDirection:'column',alignItems:'center',gap:8,border:`1.5px solid ${t.color}25`,cursor:'pointer',animation:`fadeIn .3s ease ${i*.07}s both`,boxShadow:`0 3px 12px ${t.color}14`}}>
+                <span style={{fontSize:tb?36:30}}>{t.emoji}</span>
+                <span style={{fontWeight:800,fontSize:tb?16:14,color:C.text}}>{t.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{height:6}}/>
+      </div>
+    </div>
+  );
+}
+
+/* ─── DATA NOTES ─── */
+function DataNotes({role,onBack}){
+  const tb=useW()>=768;
+  const [mode,setMode]=useState('frequency'); // frequency | duration | notes
+  const [counts,setCounts]=useState({});
+  const [notes,setNotes]=useState('');
+  const [duration,setDuration]=useState(0);
+  const [running,setRunning]=useState(false);
+  const [sessions,setSessions]=useState([]);
+  const [target,setTarget]=useState('Target Behavior');
+  const ref=useRef(null);
+
+  const BEHAVIORS=[
+    {id:'mand',label:'Mand',emoji:'🗣️'},{id:'tact',label:'Tact',emoji:'👁️'},
+    {id:'listener',label:'Listener',emoji:'👂'},{id:'imitation',label:'Imitation',emoji:'🪞'},
+    {id:'problem',label:'Problem Behavior',emoji:'⚠️'},{id:'transition',label:'Transition',emoji:'🔄'},
+    {id:'attend',label:'Attending',emoji:'🎯'},{id:'compliance',label:'Compliance',emoji:'✅'},
+  ];
+
+  useEffect(()=>{
+    if(running){ref.current=setInterval(()=>setDuration(d=>d+1),1000);}
+    else clearInterval(ref.current);
+    return()=>clearInterval(ref.current);
+  },[running]);
+
+  function tally(id){setCounts(c=>({...c,[id]:(c[id]||0)+1}));}
+  function fmt(s){return`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+
+  function saveSession(){
+    const s={id:Date.now(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),counts:{...counts},duration,notes,target};
+    setSessions(p=>[s,...p]);setCounts({});setDuration(0);setRunning(false);setNotes('');
+  }
+
+  const tabs=[{id:'frequency',label:'Frequency',emoji:'🔢'},{id:'duration',label:'Duration',emoji:'⏱️'},{id:'notes',label:'Notes',emoji:'📝'}];
+
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+      <Hdr title="📊 Data Notes" onBack={onBack} color={C.blue}
+        right={<button onClick={saveSession} style={{background:C.blue,color:'white',borderRadius:14,padding:tb?'10px 18px':'8px 14px',fontWeight:700,fontSize:tb?15:13}}>Save Session</button>}/>
+      <div style={{display:'flex',background:C.card,borderBottom:`1px solid ${C.border}`,padding:tb?'8px 24px':'8px 12px',gap:6}}>
+        {tabs.map(t=>(
+          <button key={t.id} onClick={()=>setMode(t.id)} style={{flex:1,padding:tb?'10px 0':'8px 0',borderRadius:12,fontWeight:700,fontSize:tb?15:13,background:mode===t.id?C.blue:'transparent',color:mode===t.id?'white':C.soft,display:'flex',alignItems:'center',justifyContent:'center',gap:5}}>{t.emoji} {t.label}</button>
+        ))}
+      </div>
+      <div style={{flex:1,overflowY:'auto',padding:tb?'18px 24px':14,display:'flex',flexDirection:'column',gap:14}}>
+
+        {/* Client / target label */}
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          <span style={{fontSize:12,fontWeight:800,color:C.soft,letterSpacing:1,textTransform:'uppercase',whiteSpace:'nowrap'}}>Client / Target</span>
+          <input value={target} onChange={e=>setTarget(e.target.value)}
+            style={{flex:1,background:C.card,border:`1.5px solid ${C.border}`,borderRadius:12,padding:'9px 14px',fontSize:14,fontWeight:600,color:C.text,outline:'none'}}/>
+        </div>
+
+        {mode==='frequency'&&(
+          <div>
+            <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:12,letterSpacing:1.2,textTransform:'uppercase'}}>Tap to Tally</p>
+            <div style={{display:'grid',gridTemplateColumns:tb?'repeat(4,1fr)':'repeat(2,1fr)',gap:tb?12:10}}>
+              {BEHAVIORS.map(b=>(
+                <button key={b.id} onClick={()=>tally(b.id)} style={{background:counts[b.id]?`${C.blue}14`:C.card,borderRadius:18,padding:tb?'16px 12px':'14px 10px',display:'flex',flexDirection:'column',alignItems:'center',gap:7,border:`2px solid ${counts[b.id]?C.blue:C.border}`,transition:'all .15s',animation:'pop .25s ease'}}>
+                  <span style={{fontSize:tb?30:26}}>{b.emoji}</span>
+                  <span style={{fontWeight:700,fontSize:tb?14:12,color:C.text,textAlign:'center',lineHeight:1.2}}>{b.label}</span>
+                  <div style={{background:counts[b.id]?C.blue:C.bg,color:counts[b.id]?'white':C.soft,borderRadius:20,padding:'2px 12px',fontWeight:900,fontSize:tb?18:16,minWidth:36,textAlign:'center'}}>{counts[b.id]||0}</div>
+                </button>
+              ))}
+            </div>
+            <div style={{display:'flex',gap:10,marginTop:14}}>
+              <button onClick={()=>setCounts({})} style={{flex:1,background:C.card,borderRadius:14,padding:13,fontWeight:700,fontSize:14,color:C.soft,border:`1.5px solid ${C.border}`}}>↺ Reset All</button>
+            </div>
+          </div>
+        )}
+
+        {mode==='duration'&&(
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:20,paddingTop:12}}>
+            <div style={{background:C.blueL,borderRadius:28,padding:tb?'40px 60px':'32px 44px',textAlign:'center',border:`2px solid ${C.blue}30`}}>
+              <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:8,letterSpacing:1,textTransform:'uppercase'}}>Elapsed Time</p>
+              <p style={{fontSize:tb?72:56,fontWeight:900,color:C.blue,fontVariantNumeric:'tabular-nums'}}>{fmt(duration)}</p>
+            </div>
+            <div style={{display:'flex',gap:12}}>
+              <button onClick={()=>setRunning(r=>!r)} style={{background:running?C.coral:C.green,color:'white',borderRadius:18,padding:tb?'16px 36px':'14px 28px',fontWeight:900,fontSize:tb?20:18,minWidth:140}}>
+                {running?'⏸ Pause':'▶ Start'}
+              </button>
+              <button onClick={()=>{setDuration(0);setRunning(false);}} style={{background:C.card,borderRadius:18,padding:tb?'16px 24px':'14px 20px',fontWeight:700,fontSize:tb?18:16,border:`2px solid ${C.border}`,color:C.soft}}>↺</button>
+            </div>
+            <p style={{fontSize:13,color:C.soft,fontWeight:600}}>Start when the behavior begins. Pause when it ends.</p>
+          </div>
+        )}
+
+        {mode==='notes'&&(
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <textarea value={notes} onChange={e=>setNotes(e.target.value)}
+              placeholder="Session notes, antecedents, consequences, observations..."
+              style={{width:'100%',minHeight:tb?220:180,background:C.card,border:`1.5px solid ${C.border}`,borderRadius:16,padding:16,fontSize:tb?16:14,color:C.text,resize:'vertical',outline:'none',lineHeight:1.6}}/>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+              {['Independent ✓','Prompted P','No Response NR','Incorrect ✗','Self-Correct SC'].map(t=>(
+                <button key={t} onClick={()=>setNotes(n=>n+(n?'\n':'')+t)} style={{background:C.blueL,borderRadius:10,padding:'7px 13px',fontWeight:700,fontSize:13,color:C.blue,border:`1.5px solid ${C.blue}25`}}>{t}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Saved sessions */}
+        {sessions.length>0&&(
+          <div>
+            <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:10,letterSpacing:1.2,textTransform:'uppercase'}}>Saved Sessions</p>
+            {sessions.map(s=>(
+              <div key={s.id} style={{background:C.card,borderRadius:16,padding:'12px 16px',marginBottom:8,border:`1px solid ${C.border}`}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                  <span style={{fontWeight:700,fontSize:14,color:C.text}}>{s.target}</span>
+                  <span style={{fontSize:12,color:C.soft}}>{s.time}</span>
+                </div>
+                <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+                  {Object.entries(s.counts).filter(([,v])=>v>0).map(([k,v])=>(
+                    <span key={k} style={{background:C.blueL,borderRadius:8,padding:'2px 10px',fontSize:12,fontWeight:700,color:C.blue}}>{k}: {v}</span>
+                  ))}
+                  {s.duration>0&&<span style={{background:C.greenL,borderRadius:8,padding:'2px 10px',fontSize:12,fontWeight:700,color:C.green}}>⏱ {fmt(s.duration)}</span>}
+                  {s.notes&&<span style={{background:C.yellowL,borderRadius:8,padding:'2px 10px',fontSize:12,fontWeight:700,color:C.soft}}>📝 Note</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{height:8}}/>
+      </div>
+    </div>
+  );
+}
+
+/* ─── TIMER (STANDALONE) ─── */
+function TimerTool({onBack}){
+  const tb=useW()>=768;
+  const [tSec,setTSec]=useState(300);const [tLeft,setTLeft]=useState(300);const [running,setRunning]=useState(false);
+  const [label,setLabel]=useState('Activity Timer');
+  const ref=useRef(null);
+
+  useEffect(()=>{
+    if(running&&tLeft>0){ref.current=setTimeout(()=>setTLeft(t=>t-1),1000);}
+    else if(tLeft===0&&running){setRunning(false);speak('Time is up! Great job!');}
+    return()=>clearTimeout(ref.current);
+  },[running,tLeft]);
+
+  function fmt(s){return`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+  const pct=tLeft/tSec;
+  const R=tb?90:70;const circ=2*Math.PI*R;const sz=(R+20)*2;
+  const PRESETS=[
+    {label:'1 min',sec:60},{label:'2 min',sec:120},{label:'3 min',sec:180},
+    {label:'5 min',sec:300},{label:'10 min',sec:600},{label:'15 min',sec:900},
+    {label:'20 min',sec:1200},{label:'30 min',sec:1800},
+  ];
+  const color=pct>.5?C.green:pct>.2?C.yellow:C.coral;
+
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+      <Hdr title="⏱️ Timer" onBack={onBack} color={C.yellow}/>
+      <div style={{flex:1,overflowY:'auto',padding:tb?'28px 40px':20,display:'flex',flexDirection:'column',alignItems:'center',gap:tb?28:20}}>
+
+        {/* Label input */}
+        <input value={label} onChange={e=>setLabel(e.target.value)}
+          style={{width:'100%',maxWidth:400,textAlign:'center',background:C.card,border:`2px solid ${C.border}`,borderRadius:16,padding:'11px 16px',fontSize:tb?18:16,fontWeight:800,color:C.text,outline:'none'}}/>
+
+        {/* Ring */}
+        <div style={{position:'relative',width:sz,height:sz}}>
+          <svg width={sz} height={sz}>
+            <circle cx={sz/2} cy={sz/2} r={R} fill={`${color}12`} stroke={`${color}25`} strokeWidth={tb?18:14}/>
+            <circle cx={sz/2} cy={sz/2} r={R} fill="none" stroke={color} strokeWidth={tb?18:14}
+              strokeDasharray={circ} strokeDashoffset={circ*(1-pct)}
+              strokeLinecap="round" transform={`rotate(-90 ${sz/2} ${sz/2})`}
+              style={{transition:'stroke-dashoffset 1s linear,stroke .5s ease'}}/>
+          </svg>
+          <div style={{position:'absolute',top:0,left:0,width:sz,height:sz,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4}}>
+            <span style={{fontSize:tb?56:44,fontWeight:900,color:C.text,fontVariantNumeric:'tabular-nums'}}>{fmt(tLeft)}</span>
+            <span style={{fontSize:tb?14:12,color:C.soft,fontWeight:600}}>{label}</span>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div style={{display:'flex',gap:12}}>
+          <button onClick={()=>setRunning(r=>!r)} style={{background:running?C.coral:color,color:'white',borderRadius:20,padding:tb?'16px 44px':'14px 36px',fontWeight:900,fontSize:tb?22:18,minWidth:160}}>
+            {running?'⏸ Pause':'▶ Start'}
+          </button>
+          <button onClick={()=>{setTLeft(tSec);setRunning(false);}} style={{background:C.card,borderRadius:20,padding:tb?'16px 24px':'14px 20px',fontWeight:700,fontSize:tb?20:18,border:`2px solid ${C.border}`,color:C.soft}}>↺</button>
+        </div>
+
+        {/* Presets */}
+        <div style={{width:'100%',maxWidth:560}}>
+          <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:12,letterSpacing:1.2,textTransform:'uppercase',textAlign:'center'}}>Quick Set</p>
+          <div style={{display:'grid',gridTemplateColumns:tb?'repeat(4,1fr)':'repeat(4,1fr)',gap:tb?10:8}}>
+            {PRESETS.map(p=>(
+              <button key={p.sec} onClick={()=>{setTSec(p.sec);setTLeft(p.sec);setRunning(false);}} style={{background:tSec===p.sec?C.yellow:C.card,color:tSec===p.sec?'white':C.text,borderRadius:14,padding:tb?'12px 0':'10px 0',fontWeight:800,fontSize:tb?15:13,border:`2px solid ${tSec===p.sec?C.yellow:C.border}`,transition:'all .15s'}}>{p.label}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Visual strip */}
+        <div style={{width:'100%',maxWidth:400,background:C.card,borderRadius:16,padding:16,border:`1px solid ${C.border}`}}>
+          <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:10,letterSpacing:1,textTransform:'uppercase'}}>Progress</p>
+          <div style={{background:C.bg,borderRadius:10,height:tb?20:16,overflow:'hidden'}}>
+            <div style={{width:`${pct*100}%`,height:'100%',background:color,borderRadius:10,transition:'width 1s linear,background .5s ease'}}/>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',marginTop:6}}>
+            <span style={{fontSize:12,color:C.soft,fontWeight:600}}>0:00</span>
+            <span style={{fontSize:12,color:C.soft,fontWeight:600}}>{fmt(tSec)}</span>
+          </div>
+        </div>
+        <div style={{height:8}}/>
+      </div>
+    </div>
+  );
+}
+
+/* ─── GOALS ─── */
+function Goals({role,onBack}){
+  const tb=useW()>=768;
+  const [goals,setGoals]=useState([
+    {id:1,label:'Mand for 3 preferred items',cat:'Communication',progress:60,status:'active',notes:'Using PECS level 2'},
+    {id:2,label:'Identify 10 common objects',cat:'Receptive Language',progress:80,status:'active',notes:''},
+    {id:3,label:'Complete 3-step routine independently',cat:'Daily Living',progress:30,status:'active',notes:'Morning routine'},
+    {id:4,label:'Tact 5 body parts',cat:'Expressive Language',progress:100,status:'mastered',notes:'Mastered 3/10'},
+  ]);
+  const [adding,setAdding]=useState(false);
+  const [newLabel,setNewLabel]=useState('');
+  const [newCat,setNewCat]=useState('Communication');
+  const CATS2=['Communication','Receptive Language','Expressive Language','Daily Living','Social Skills','Behavior','Motor Skills'];
+  const statusColor={active:C.blue,mastered:C.green,paused:C.yellow,discontinued:C.coral};
+
+  function addGoal(){
+    if(!newLabel.trim())return;
+    setGoals(g=>[...g,{id:Date.now(),label:newLabel,cat:newCat,progress:0,status:'active',notes:''}]);
+    setNewLabel('');setAdding(false);
+  }
+  function updateProgress(id,v){setGoals(g=>g.map(x=>x.id===id?{...x,progress:Math.max(0,Math.min(100,v))}:x));}
+  function cycleStatus(id){
+    const order=['active','mastered','paused','discontinued'];
+    setGoals(g=>g.map(x=>x.id===id?{...x,status:order[(order.indexOf(x.status)+1)%order.length]}:x));
+  }
+
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+      <Hdr title="🎯 Goals" onBack={onBack} color={C.pink}
+        right={<button onClick={()=>setAdding(a=>!a)} style={{background:adding?C.soft:C.pink,color:'white',borderRadius:14,padding:tb?'10px 18px':'8px 14px',fontWeight:700,fontSize:tb?15:13}}>{adding?'Cancel':'＋ Add Goal'}</button>}/>
+      <div style={{flex:1,overflowY:'auto',padding:tb?'18px 24px':14,display:'flex',flexDirection:'column',gap:12}}>
+
+        {/* Add form */}
+        {adding&&(
+          <div style={{background:C.pinkL,borderRadius:20,padding:tb?20:16,border:`2px solid ${C.pink}30`,animation:'fadeIn .25s ease',display:'flex',flexDirection:'column',gap:12}}>
+            <input value={newLabel} onChange={e=>setNewLabel(e.target.value)}
+              placeholder="Describe the goal..."
+              style={{background:C.card,border:`1.5px solid ${C.border}`,borderRadius:12,padding:'11px 14px',fontSize:tb?16:14,fontWeight:600,color:C.text,outline:'none',width:'100%'}}/>
+            <select value={newCat} onChange={e=>setNewCat(e.target.value)}
+              style={{background:C.card,border:`1.5px solid ${C.border}`,borderRadius:12,padding:'11px 14px',fontSize:tb?15:13,fontWeight:600,color:C.text,outline:'none'}}>
+              {CATS2.map(c=><option key={c}>{c}</option>)}
+            </select>
+            <button onClick={addGoal} style={{background:C.pink,color:'white',borderRadius:14,padding:'13px 0',fontWeight:800,fontSize:tb?16:15}}>Add Goal ✓</button>
+          </div>
+        )}
+
+        {/* Stats */}
+        <div style={{display:'grid',gridTemplateColumns:tb?'repeat(4,1fr)':'repeat(2,1fr)',gap:10}}>
+          {[{label:'Active',val:goals.filter(g=>g.status==='active').length,color:C.blue,light:C.blueL},
+            {label:'Mastered',val:goals.filter(g=>g.status==='mastered').length,color:C.green,light:C.greenL},
+            {label:'Total',val:goals.length,color:C.pink,light:C.pinkL},
+            {label:'Avg Progress',val:`${Math.round(goals.filter(g=>g.status==='active').reduce((a,g)=>a+g.progress,0)/Math.max(goals.filter(g=>g.status==='active').length,1))}%`,color:C.purple,light:C.purpleL},
+          ].map(s=>(
+            <div key={s.label} style={{background:s.light,borderRadius:16,padding:tb?'14px 18px':'12px 14px',border:`1.5px solid ${s.color}25`}}>
+              <p style={{fontSize:tb?28:22,fontWeight:900,color:s.color}}>{s.val}</p>
+              <p style={{fontSize:tb?13:11,color:C.soft,fontWeight:700,marginTop:2}}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Goal list */}
+        {goals.map(g=>(
+          <div key={g.id} style={{background:C.card,borderRadius:20,padding:tb?'18px 20px':'14px 16px',border:`1.5px solid ${C.border}`,display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:10}}>
+              <div style={{flex:1}}>
+                <p style={{fontWeight:800,fontSize:tb?17:15,color:C.text,marginBottom:3}}>{g.label}</p>
+                <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+                  <span style={{background:`${statusColor[g.status]}18`,color:statusColor[g.status],borderRadius:8,padding:'2px 10px',fontSize:12,fontWeight:700}}>{g.cat}</span>
+                  <button onClick={()=>cycleStatus(g.id)} style={{background:`${statusColor[g.status]}15`,color:statusColor[g.status],borderRadius:8,padding:'2px 10px',fontSize:12,fontWeight:700,textTransform:'capitalize'}}>{g.status}</button>
+                </div>
+              </div>
+              <span style={{fontSize:tb?22:18,fontWeight:900,color:g.progress===100?C.green:C.text,flexShrink:0}}>{g.progress}%</span>
+            </div>
+            {/* Progress bar with tap to adjust */}
+            <div style={{position:'relative'}}>
+              <div style={{background:C.bg,borderRadius:10,height:tb?18:14,overflow:'hidden',cursor:'pointer'}}
+                onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=Math.round((e.clientX-r.left)/r.width*100);updateProgress(g.id,p);}}>
+                <div style={{width:`${g.progress}%`,height:'100%',background:g.progress===100?C.green:statusColor[g.status]||C.blue,borderRadius:10,transition:'width .3s ease'}}/>
+              </div>
+              <p style={{fontSize:11,color:C.soft,marginTop:4,fontWeight:600}}>Tap the bar to update progress</p>
+            </div>
+          </div>
+        ))}
+        <div style={{height:8}}/>
+      </div>
+    </div>
+  );
+}
+
+/* ─── SETTINGS ─── */
+function Settings({role,onBack,onRoleChange}){
+  const tb=useW()>=768;
+  const [speechOn,setSpeechOn]=useState(true);
+  const [speechRate,setSpeechRate]=useState(88);
+  const [speechPitch,setSpeechPitch]=useState(105);
+  const [testWord,setTestWord]=useState('');
+
+  function testSpeech(word){
+    const u=new SpeechSynthesisUtterance(word||'Hello! The app is working!');
+    u.rate=speechRate/100;u.pitch=speechPitch/100;u.volume=1;
+    window.speechSynthesis.cancel();
+    if(speechOn)window.speechSynthesis.speak(u);
+  }
+
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+      <Hdr title="⚙️ Settings" onBack={onBack} color={C.soft}/>
+      <div style={{flex:1,overflowY:'auto',padding:tb?'20px 24px':16,display:'flex',flexDirection:'column',gap:18}}>
+
+        {/* Role */}
+        <div>
+          <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:12,letterSpacing:1.2,textTransform:'uppercase'}}>Current Role</p>
+          <div style={{display:'grid',gridTemplateColumns:tb?'repeat(4,1fr)':'repeat(2,1fr)',gap:10}}>
+            {ROLES.map(r=>(
+              <button key={r.id} onClick={()=>onRoleChange(r)} style={{background:role.id===r.id?r.light:C.card,borderRadius:18,padding:tb?'16px 12px':'14px 10px',display:'flex',flexDirection:'column',alignItems:'center',gap:7,border:`2.5px solid ${role.id===r.id?r.color:C.border}`,transition:'all .2s'}}>
+                <span style={{fontSize:tb?32:28}}>{r.emoji}</span>
+                <span style={{fontWeight:800,fontSize:tb?16:14,color:role.id===r.id?r.color:C.text}}>{r.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Speech */}
+        <div style={{background:C.card,borderRadius:20,padding:tb?'20px 24px':'16px 18px',border:`1.5px solid ${C.border}`}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+            <p style={{fontWeight:800,fontSize:tb?17:15,color:C.text}}>🔊 Speech / Voice</p>
+            <button onClick={()=>setSpeechOn(s=>!s)} style={{background:speechOn?C.green:C.border,borderRadius:20,width:52,height:28,position:'relative',transition:'background .2s',flexShrink:0}}>
+              <div style={{width:22,height:22,borderRadius:11,background:'white',position:'absolute',top:3,left:speechOn?27:3,transition:'left .2s',boxShadow:'0 1px 4px rgba(0,0,0,.2)'}}/>
+            </button>
+          </div>
+          {speechOn&&(
+            <div style={{display:'flex',flexDirection:'column',gap:14}}>
+              <div>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                  <span style={{fontSize:13,fontWeight:700,color:C.soft}}>Speed</span>
+                  <span style={{fontSize:13,fontWeight:800,color:C.text}}>{speechRate}%</span>
+                </div>
+                <input type="range" min={60} max={140} step={5} value={speechRate} onChange={e=>setSpeechRate(+e.target.value)}
+                  style={{width:'100%',accentColor:C.green}}/>
+              </div>
+              <div>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                  <span style={{fontSize:13,fontWeight:700,color:C.soft}}>Pitch</span>
+                  <span style={{fontSize:13,fontWeight:800,color:C.text}}>{speechPitch}%</span>
+                </div>
+                <input type="range" min={60} max={150} step={5} value={speechPitch} onChange={e=>setSpeechPitch(+e.target.value)}
+                  style={{width:'100%',accentColor:C.purple}}/>
+              </div>
+              <div style={{display:'flex',gap:10}}>
+                <input value={testWord} onChange={e=>setTestWord(e.target.value)} placeholder="Type a word to test..."
+                  style={{flex:1,background:C.bg,border:`1.5px solid ${C.border}`,borderRadius:12,padding:'10px 14px',fontSize:14,fontWeight:600,color:C.text,outline:'none'}}/>
+                <button onClick={()=>testSpeech(testWord)} style={{background:C.green,color:'white',borderRadius:12,padding:'10px 18px',fontWeight:700,fontSize:14}}>Test</button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* App info */}
+        <div style={{background:C.card,borderRadius:20,padding:tb?'20px 24px':'16px 18px',border:`1.5px solid ${C.border}`}}>
+          <p style={{fontWeight:800,fontSize:tb?17:15,color:C.text,marginBottom:14}}>📱 App Info</p>
+          {[
+            {label:'App Name',val:'Living Learning World'},
+            {label:'Version',val:'1.0.0'},
+            {label:'Platform',val:'Web / Tablet / Mobile'},
+            {label:'Speech Engine',val:speechOn?'Browser TTS':'Disabled'},
+            {label:'Data Storage',val:'Session Only (local)'},
+          ].map(row=>(
+            <div key={row.label} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:`1px solid ${C.border}`}}>
+              <span style={{fontSize:tb?14:13,color:C.soft,fontWeight:600}}>{row.label}</span>
+              <span style={{fontSize:tb?14:13,color:C.text,fontWeight:700}}>{row.val}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{height:8}}/>
+      </div>
+    </div>
+  );
+}
+
+/* ─── LEARN MODE ─── */
+function LearnMode({onBack,onNav}){
+  const tb=useW()>=768;
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+      <Hdr title="📖 Learn Mode" onBack={onBack} color={C.green}/>
+      <div style={{padding:tb?'12px 24px':'10px 16px',background:C.greenL,borderBottom:`1px solid ${C.green}20`}}>
+        <p style={{fontSize:tb?15:13,color:C.soft,fontWeight:600}}>Tap a category to start learning</p>
+      </div>
+      <div style={{flex:1,overflowY:'auto',padding:tb?'18px 24px':14}}>
+        <div style={{display:'grid',gridTemplateColumns:tb?'repeat(3,1fr)':'repeat(2,1fr)',gap:tb?16:12}}>
+          {CATS.map((cat,i)=>(
+            <button key={cat.id} onClick={()=>onNav('lcat',cat)} style={{background:`${cat.color}12`,borderRadius:24,padding:tb?'28px 16px':'22px 14px',display:'flex',flexDirection:'column',alignItems:'center',gap:tb?12:8,border:`2px solid ${cat.color}30`,cursor:'pointer',animation:`fadeIn .3s ease ${i*.07}s both`,boxShadow:`0 4px 14px ${cat.color}15`}}>
+              <span style={{fontSize:tb?58:46}}>{cat.emoji}</span>
+              <span style={{fontWeight:800,fontSize:tb?18:16,color:C.text}}>{cat.label}</span>
+              <span style={{fontSize:tb?13:11,color:C.soft}}>{cat.items.length} words</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LearnCat({cat,onBack,onNav}){
+  const [active,setActive]=useState(null);const [tapped,setTapped]=useState(null);
+  const tb=useW()>=768;
+  function tap(item){setActive(item.id);setTapped(item.id);speak(item.label);setTimeout(()=>setTapped(null),500);setTimeout(()=>setActive(null),2200);}
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+      <Hdr title={`${cat.emoji} ${cat.label}`} onBack={onBack} color={cat.color}
+        right={<button onClick={()=>onNav('lgame',cat)} style={{background:cat.color,color:'white',borderRadius:14,padding:tb?'10px 20px':'8px 14px',fontWeight:700,fontSize:tb?15:13}}>Play Game 🎯</button>}/>
+      <div style={{background:`${cat.color}15`,padding:tb?'12px 24px':'10px 16px',borderBottom:`1px solid ${cat.color}25`}}>
+        <p style={{fontSize:tb?15:13,color:C.soft,fontWeight:600}}>👆 Tap each card to hear the word</p>
+      </div>
+      <div style={{flex:1,overflowY:'auto',padding:tb?'18px 24px':14}}>
+        <div style={{display:'grid',gridTemplateColumns:tb?'repeat(3,1fr)':'repeat(2,1fr)',gap:tb?16:14}}>
+          {cat.items.map((item,i)=>(
+            <button key={item.id} onClick={()=>tap(item)} style={{background:active===item.id?`${cat.color}22`:C.card,borderRadius:24,padding:tb?'30px 16px':'24px 14px',display:'flex',flexDirection:'column',alignItems:'center',gap:tb?12:10,border:`2.5px solid ${active===item.id?cat.color:C.border}`,cursor:'pointer',transition:'all .2s ease',animation:`fadeIn .35s ease ${i*.07}s both`,transform:tapped===item.id?'scale(.95)':active===item.id?'scale(1.04)':'scale(1)',boxShadow:active===item.id?`0 6px 22px ${cat.color}32`:`0 2px 8px rgba(0,0,0,.05)`}}>
+              <span style={{fontSize:tb?64:52}}>{item.emoji}</span>
+              <span style={{fontWeight:800,fontSize:tb?20:17,color:active===item.id?cat.color:C.text}}>{item.label}</span>
+              {active===item.id&&<div style={{display:'flex',gap:5}}>{[0,1,2].map(j=><div key={j} style={{width:7,height:7,borderRadius:4,background:cat.color,animation:`bounce .6s ease ${j*.12}s infinite`}}/>)}</div>}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LearnGame({cat,onBack}){
+  const TOTAL=6;
+  const [score,setScore]=useState(0);const [round,setRound]=useState(0);
+  const [sel,setSel]=useState(null);const [res,setRes]=useState(null);const [over,setOver]=useState(false);
+  const tb=useW()>=768;
+  const cur=cat.items[round%cat.items.length];
+  const opts=useMemo(()=>{const o=cat.items.filter(i=>i.id!==cur.id).sort(()=>Math.random()-.5).slice(0,3);return[...o,cur].sort(()=>Math.random()-.5);},[round]);
+  useEffect(()=>{speak(`What is this? ${cur.label}`);},[round]);
+  function answer(item){
+    if(res)return;setSel(item.id);
+    if(item.id===cur.id){setRes('ok');setScore(s=>s+1);speak('Great job!');setTimeout(()=>{if(round+1>=TOTAL)setOver(true);else{setRound(r=>r+1);setSel(null);setRes(null);}},1100);}
+    else{setRes('no');speak('Try again!');setTimeout(()=>{setSel(null);setRes(null);},900);}
+  }
+  if(over){
+    const stars=score>=5?3:score>=3?2:1;
+    return(
+      <div style={{height:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:24,padding:tb?48:32,background:C.bg}}>
+        <span style={{fontSize:tb?100:80,animation:'celebrate 1s ease'}}>🎉</span>
+        <h2 style={{fontSize:tb?36:28,fontWeight:900,color:C.text}}>Amazing Work!</h2>
+        <div style={{background:`${cat.color}18`,borderRadius:24,padding:tb?'28px 60px':'20px 44px',textAlign:'center',border:`2px solid ${cat.color}30`}}>
+          <p style={{fontSize:tb?60:48,fontWeight:900,color:cat.color}}>{score}/{TOTAL}</p>
+          <p style={{fontSize:tb?17:14,color:C.soft,fontWeight:600,marginTop:4}}>Correct Answers</p>
+          <div style={{display:'flex',justifyContent:'center',gap:8,marginTop:14}}>{[1,2,3].map(s=><span key={s} style={{fontSize:tb?36:28,opacity:s<=stars?1:.25}}>⭐</span>)}</div>
+        </div>
+        <div style={{display:'flex',gap:14,width:'100%',maxWidth:tb?500:340}}>
+          <button onClick={()=>{setRound(0);setScore(0);setOver(false);setSel(null);setRes(null);}} style={{flex:1,background:cat.color,color:'white',borderRadius:18,padding:tb?20:16,fontWeight:800,fontSize:tb?18:16}}>Play Again</button>
+          <button onClick={onBack} style={{flex:1,background:C.bg,color:C.text,borderRadius:18,padding:tb?20:16,fontWeight:700,fontSize:tb?17:16,border:`2px solid ${C.border}`}}>Done ✓</button>
+        </div>
+      </div>
+    );
+  }
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+      <Hdr title={`${cat.emoji} Game`} onBack={onBack} color={cat.color} right={<span style={{fontWeight:900,color:cat.color,fontSize:tb?20:17}}>{score}/{TOTAL}</span>}/>
+      <div style={{padding:tb?'8px 24px':'8px 16px',background:C.card}}>
+        <div style={{background:C.bg,borderRadius:8,height:tb?10:8,overflow:'hidden'}}>
+          <div style={{width:`${(round/TOTAL)*100}%`,height:'100%',background:cat.color,borderRadius:8,transition:'width .4s ease'}}/>
+        </div>
+      </div>
+      <div style={{flex:1,display:'flex',flexDirection:tb?'row':'column',padding:tb?'20px 24px':16,gap:16,overflowY:'auto',alignItems:tb?'flex-start':'stretch'}}>
+        <div style={{background:`${cat.color}12`,borderRadius:26,padding:tb?28:22,display:'flex',flexDirection:'column',alignItems:'center',gap:16,border:`2px solid ${cat.color}22`,justifyContent:'center',flex:tb?'0 0 280px':1}}>
+          <p style={{fontSize:tb?15:13,fontWeight:700,color:C.soft}}>What is this?</p>
+          <span style={{fontSize:tb?100:84,animation:'bounce 2s ease infinite'}}>{cur.emoji}</span>
+          <button onClick={()=>speak(cur.label)} style={{background:cat.color,color:'white',borderRadius:16,padding:tb?'11px 28px':'9px 22px',fontWeight:700,fontSize:tb?16:14,display:'flex',alignItems:'center',gap:6}}>🔊 Hear it</button>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:tb?14:10,flex:1,alignContent:'start'}}>
+          {opts.map(opt=>{const ok=sel===opt.id&&res==='ok';const no=sel===opt.id&&res==='no';return(
+            <button key={opt.id} onClick={()=>answer(opt)} style={{background:ok?'#E8F7F2':no?'#FEECEC':C.card,borderRadius:20,padding:tb?'20px 12px':'14px 10px',display:'flex',flexDirection:'column',alignItems:'center',gap:tb?10:6,border:`2.5px solid ${ok?C.green:no?'#E57373':C.border}`,transition:'all .18s',transform:sel===opt.id?'scale(.96)':'scale(1)'}}>
+              <span style={{fontSize:tb?44:32}}>{opt.emoji}</span>
+              <span style={{fontWeight:700,fontSize:tb?16:14,color:C.text}}>{opt.label}</span>
+              {ok&&<span style={{fontSize:tb?22:18}}>✅</span>}
+              {no&&<span style={{fontSize:tb?22:18}}>❌</span>}
+            </button>
+          );})}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── FIRST / THEN ─── */
+function FirstThen({onBack}){
+  const [first,setFirst]=useState(null);const [then,setThen]=useState(null);
+  const [picking,setPicking]=useState('first');
+  const [showTmr,setShowTmr]=useState(false);
+  const [tSec,setTSec]=useState(300);const [tLeft,setTLeft]=useState(300);const [running,setRunning]=useState(false);
+  const ref=useRef(null);const tb=useW()>=768;
+  useEffect(()=>{if(running&&tLeft>0){ref.current=setTimeout(()=>setTLeft(t=>t-1),1000);}else if(tLeft===0&&running){setRunning(false);speak('Time is up!');}return()=>clearTimeout(ref.current);},[running,tLeft]);
+  function pick(act){if(picking==='first'){setFirst(act);speak(`First: ${act.label}`);setPicking('then');}else if(picking==='then'){setThen(act);speak(`Then: ${act.label}`);setPicking(null);}}
+  function reset(){setFirst(null);setThen(null);setPicking('first');setTLeft(tSec);setRunning(false);}
+  function fmt(s){return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+  const pct=tLeft/tSec;const r=tb?46:38;const circ=2*Math.PI*r;const sz=tb?108:96;
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+      <Hdr title="📋 First / Then" onBack={onBack} color={C.coral}
+        right={<button onClick={()=>setShowTmr(s=>!s)} style={{background:showTmr?C.yellow:C.yellowL,borderRadius:14,padding:tb?'10px 18px':'7px 13px',fontWeight:700,fontSize:tb?15:13,color:showTmr?'white':C.text}}>⏱️ Timer</button>}/>
+      <div style={{flex:1,overflowY:'auto',padding:tb?'18px 24px':14,display:'flex',flexDirection:'column',gap:14}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:tb?20:12}}>
+          {[{key:'first',label:'FIRST',val:first,color:C.coral},{key:'then',label:'THEN',val:then,color:C.green}].map(slot=>(
+            <button key={slot.key} onClick={()=>setPicking(slot.key)} style={{background:slot.val?`${slot.color}14`:C.card,borderRadius:24,padding:tb?20:16,display:'flex',flexDirection:'column',alignItems:'center',gap:tb?14:10,border:`3px solid ${picking===slot.key?slot.color:slot.val?`${slot.color}45`:C.border}`,minHeight:tb?200:160,justifyContent:'center',cursor:'pointer',boxShadow:picking===slot.key?`0 0 0 5px ${slot.color}22`:'none',transition:'all .2s'}}>
+              <div style={{background:slot.color,borderRadius:12,padding:tb?'5px 18px':'3px 14px',color:'white',fontWeight:900,fontSize:tb?15:13,letterSpacing:1}}>{slot.label}</div>
+              {slot.val?(<><span style={{fontSize:tb?64:48}}>{slot.val.emoji}</span><span style={{fontWeight:800,fontSize:tb?18:15,color:C.text}}>{slot.val.label}</span></>):(<><span style={{fontSize:tb?44:34,opacity:.2}}>＋</span><span style={{fontSize:tb?14:12,color:C.soft,fontWeight:600}}>{picking===slot.key?'Choose below ↓':'Tap to select'}</span></>)}
+            </button>
+          ))}
+        </div>
+        {showTmr&&(
+          <div style={{background:C.yellowL,borderRadius:24,padding:tb?20:16,display:'flex',flexDirection:tb?'row':'column',alignItems:'center',gap:tb?28:12,border:`2px solid ${C.yellow}45`}}>
+            <div style={{position:'relative',width:sz,height:sz,flexShrink:0}}>
+              <svg width={sz} height={sz} style={{position:'absolute',top:0,left:0}}>
+                <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke={`${C.yellow}30`} strokeWidth="8"/>
+                <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke={C.yellow} strokeWidth="8" strokeDasharray={circ} strokeDashoffset={circ*(1-pct)} strokeLinecap="round" transform={`rotate(-90 ${sz/2} ${sz/2})`} style={{transition:'stroke-dashoffset 1s linear'}}/>
+              </svg>
+              <div style={{position:'absolute',top:0,left:0,width:sz,height:sz,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:tb?24:20,color:C.text}}>{fmt(tLeft)}</div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:10,flex:1}}>
+              <div style={{display:'flex',gap:10}}>
+                <button onClick={()=>setRunning(r=>!r)} style={{background:C.yellow,color:'white',borderRadius:14,padding:tb?'12px 28px':'9px 22px',fontWeight:800,fontSize:tb?17:15,flex:1}}>{running?'⏸ Pause':'▶ Start'}</button>
+                <button onClick={()=>{setTLeft(tSec);setRunning(false);}} style={{background:C.card,borderRadius:14,padding:tb?'12px 18px':'9px 16px',fontWeight:700,fontSize:tb?17:14,border:`1.5px solid ${C.border}`}}>↺</button>
+              </div>
+              <div style={{display:'flex',gap:7,flexWrap:'wrap'}}>
+                {[60,120,180,300,600].map(s=>(
+                  <button key={s} onClick={()=>{setTSec(s);setTLeft(s);setRunning(false);}} style={{background:tSec===s?C.yellow:C.card,color:tSec===s?'white':C.soft,borderRadius:10,padding:tb?'7px 14px':'5px 11px',fontWeight:700,fontSize:tb?14:12,border:`1.5px solid ${tSec===s?C.yellow:C.border}`}}>{fmt(s)}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {picking&&(
+          <div style={{background:picking==='first'?`${C.coral}12`:`${C.green}12`,borderRadius:14,padding:tb?'13px 22px':'10px 16px',textAlign:'center',border:`1.5px solid ${picking==='first'?C.coral:C.green}30`}}>
+            <p style={{fontWeight:700,fontSize:tb?16:14,color:picking==='first'?C.coral:C.green}}>{picking==='first'?'👆 Choose the FIRST activity':'👆 Now choose the THEN activity'}</p>
+          </div>
+        )}
+        <div>
+          <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:10,letterSpacing:1.2,textTransform:'uppercase'}}>Activities</p>
+          <div style={{display:'grid',gridTemplateColumns:tb?'repeat(4,1fr)':'repeat(3,1fr)',gap:tb?12:9}}>
+            {ACTS.map(act=>(
+              <button key={act.id} onClick={()=>picking&&pick(act)} style={{background:`${act.color}14`,borderRadius:18,padding:tb?'16px 8px':'12px 6px',display:'flex',flexDirection:'column',alignItems:'center',gap:6,border:`2px solid ${act.color}28`,cursor:picking?'pointer':'default',opacity:picking?1:.55,transition:'all .15s'}}>
+                <span style={{fontSize:tb?32:26}}>{act.emoji}</span>
+                <span style={{fontWeight:700,fontSize:tb?13:11,color:C.text,textAlign:'center',lineHeight:1.2}}>{act.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        {(first||then)&&<button onClick={reset} style={{background:C.card,borderRadius:18,padding:tb?16:14,fontWeight:700,fontSize:tb?16:14,color:C.soft,border:`2px solid ${C.border}`,width:'100%'}}>↺ Clear Board</button>}
+        <div style={{height:8}}/>
+      </div>
+    </div>
+  );
+}
+
+/* ─── MINI WORLD ─── */
+function MiniWorld({onBack,onNav}){
+  const tb=useW()>=768;
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+      <Hdr title="🏠 Mini World" onBack={onBack} color={C.purple}/>
+      <div style={{background:`${C.purple}12`,padding:tb?'20px 28px':'18px 16px',borderBottom:`1px solid ${C.purple}20`,display:'flex',alignItems:'center',gap:18}}>
+        <span style={{fontSize:tb?64:52}}>🏡</span>
+        <div>
+          <p style={{fontWeight:900,fontSize:tb?22:18,color:C.text}}>The Home</p>
+          <p style={{fontSize:tb?14:12,color:C.soft,marginTop:4}}>Explore rooms · Learn object names · Build vocabulary</p>
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:'auto',padding:tb?'18px 24px':14}}>
+        <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:14,letterSpacing:1.2,textTransform:'uppercase'}}>Choose a Room</p>
+        <div style={{display:'grid',gridTemplateColumns:tb?'repeat(3,1fr)':'repeat(2,1fr)',gap:tb?16:12}}>
+          {ROOMS.map((rm,i)=>(
+            <button key={rm.id} onClick={()=>onNav('room',rm)} style={{background:`${rm.color}13`,borderRadius:24,padding:tb?'26px 16px':'20px 14px',display:'flex',flexDirection:'column',alignItems:'center',gap:tb?12:10,border:`2px solid ${rm.color}28`,cursor:'pointer',animation:`fadeIn .3s ease ${i*.07}s both`,boxShadow:`0 4px 14px ${rm.color}14`}}>
+              <div style={{width:tb?72:58,height:tb?72:58,borderRadius:20,background:rm.color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:tb?34:28}}>{rm.emoji}</div>
+              <span style={{fontWeight:800,fontSize:tb?18:15,color:C.text}}>{rm.label}</span>
+              <span style={{fontSize:tb?13:11,color:C.soft}}>{rm.items.length} objects</span>
+            </button>
+          ))}
+        </div>
+        <div style={{height:16}}/>
+      </div>
+    </div>
+  );
+}
+
+function Room({room,onBack}){
+  const [active,setActive]=useState(null);const tb=useW()>=768;
+  function tap(item){setActive(item.id);speak(item.label);setTimeout(()=>setActive(null),2200);}
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+      <Hdr title={`${room.emoji} ${room.label}`} onBack={onBack} color={room.color}/>
+      <div style={{background:`${room.color}12`,padding:tb?'12px 24px':'10px 16px',borderBottom:`1px solid ${room.color}22`}}>
+        <p style={{fontSize:tb?15:13,color:C.soft,fontWeight:600}}>👆 Tap each object to hear its name</p>
+      </div>
+      <div style={{flex:1,overflowY:'auto',padding:tb?'18px 24px':14}}>
+        <div style={{display:'grid',gridTemplateColumns:tb?'repeat(3,1fr)':'repeat(2,1fr)',gap:tb?16:14}}>
+          {room.items.map((item,i)=>(
+            <button key={item.id} onClick={()=>tap(item)} style={{background:active===item.id?`${room.color}22`:C.card,borderRadius:24,padding:tb?'30px 16px':'24px 14px',display:'flex',flexDirection:'column',alignItems:'center',gap:tb?12:10,border:`2.5px solid ${active===item.id?room.color:C.border}`,cursor:'pointer',transition:'all .2s',animation:`fadeIn .3s ease ${i*.06}s both`,transform:active===item.id?'scale(1.05)':'scale(1)',boxShadow:active===item.id?`0 6px 22px ${room.color}30`:`0 2px 8px rgba(0,0,0,.05)`}}>
+              <span style={{fontSize:tb?64:50}}>{item.emoji}</span>
+              <span style={{fontWeight:800,fontSize:tb?20:16,color:active===item.id?room.color:C.text}}>{item.label}</span>
+              {active===item.id&&<div style={{display:'flex',gap:5}}>{[0,1,2].map(j=><div key={j} style={{width:tb?8:6,height:tb?8:6,borderRadius:4,background:room.color,animation:`bounce .6s ease ${j*.12}s infinite`}}/>)}</div>}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── UPLOAD ─── */
+function Upload({role,onBack}){
+  const [tab,setTab]=useState('photos');const [loading,setLoading]=useState(false);
+  const tb=useW()>=768;
+  const [items,setItems]=useState([
+    {id:1,label:'Living Room',emoji:'🛋️',cat:'places',date:'Today'},
+    {id:2,label:'Therapy Ball',emoji:'⚽',cat:'items',date:'Yesterday'},
+    {id:3,label:'Morning Routine',emoji:'☀️',cat:'routines',date:'2 days ago'},
+  ]);
+  function simulate(){setLoading(true);setTimeout(()=>{setLoading(false);setItems(p=>[{id:Date.now(),label:'New Photo',emoji:'📸',cat:tab,date:'Just now'},...p]);},1400);}
+  const tabs=[{id:'photos',label:'Photos',emoji:'📷'},{id:'people',label:'People',emoji:'👤'},{id:'routines',label:'Routines',emoji:'📋'}];
+  return(
+    <div style={{height:'100vh',display:'flex',flexDirection:'column'}}>
+      <Hdr title="📷 My Content" onBack={onBack} color={role.color}/>
+      <div style={{display:'flex',background:C.card,borderBottom:`1px solid ${C.border}`,padding:tb?'10px 24px':'8px 14px',gap:8}}>
+        {tabs.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:tb?'10px 0':'8px 0',borderRadius:14,fontWeight:700,fontSize:tb?15:13,background:tab===t.id?role.color:'transparent',color:tab===t.id?'white':C.soft,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>{tb&&t.emoji} {t.label}</button>
+        ))}
+      </div>
+      <div style={{flex:1,overflowY:'auto',padding:tb?'20px 24px':14,display:'flex',flexDirection:tb?'row':'column',gap:tb?24:14,alignItems:'flex-start'}}>
+        <div style={{display:'flex',flexDirection:'column',gap:14,flexShrink:0,width:tb?340:'100%'}}>
+          <button onClick={simulate} disabled={loading} style={{background:loading?`${role.color}12`:role.light,borderRadius:24,padding:tb?28:24,border:`2.5px dashed ${role.color}55`,display:'flex',flexDirection:'column',alignItems:'center',gap:12,cursor:loading?'default':'pointer',width:'100%'}}>
+            {loading?(<><span style={{fontSize:tb?48:38,display:'inline-block',animation:'spin 1s linear infinite'}}>⏳</span><span style={{fontWeight:700,color:role.color,fontSize:tb?17:15}}>Uploading...</span></>):(<><span style={{fontSize:tb?52:42}}>📤</span><span style={{fontWeight:900,fontSize:tb?20:17,color:role.color}}>Add {tab==='photos'?'Photo':tab==='people'?'Person':'Routine'}</span><span style={{fontSize:tb?14:12,color:C.soft,textAlign:'center',lineHeight:1.6}}>Upload real-life photos from your camera or gallery. They'll appear in Learn Mode, First/Then boards &amp; Mini World.</span><div style={{background:role.color,color:'white',borderRadius:16,padding:tb?'11px 28px':'9px 22px',fontWeight:800,fontSize:tb?16:14,marginTop:4}}>📷 Choose Photo</div></>)}
+          </button>
+          <div style={{background:C.yellowL,borderRadius:18,padding:tb?'16px 20px':'12px 16px',border:`1.5px solid ${C.yellow}40`,display:'flex',gap:12,alignItems:'flex-start'}}>
+            <span style={{fontSize:tb?22:18,flexShrink:0}}>💡</span>
+            <div>
+              <p style={{fontWeight:700,fontSize:tb?15:13,color:C.text,marginBottom:3}}>Pro Tip</p>
+              <p style={{fontSize:tb?13:12,color:C.soft,lineHeight:1.5}}>Under 15 seconds to add content! Tag uploads as Room · Item · Person · Activity and they'll automatically appear everywhere.</p>
+            </div>
+          </div>
+        </div>
+        <div style={{flex:1,width:'100%'}}>
+          <p style={{fontSize:12,fontWeight:800,color:C.soft,marginBottom:12,letterSpacing:1.2,textTransform:'uppercase'}}>My Library · {items.length} items</p>
+          <div style={{display:'flex',flexDirection:'column',gap:tb?10:8}}>
+            {items.map(it=>(
+              <div key={it.id} style={{background:C.card,borderRadius:18,padding:tb?'14px 20px':'12px 16px',display:'flex',alignItems:'center',gap:tb?16:14,border:`1px solid ${C.border}`,animation:'fadeIn .3s ease'}}>
+                <div style={{width:tb?60:50,height:tb?60:50,borderRadius:16,background:`${role.color}14`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:tb?30:26,flexShrink:0}}>{it.emoji}</div>
+                <div style={{flex:1}}>
+                  <p style={{fontWeight:700,fontSize:tb?17:15,color:C.text}}>{it.label}</p>
+                  <p style={{fontSize:tb?13:11,color:C.soft,marginTop:2}}>{it.date} · {it.cat}</p>
+                </div>
+                <button style={{background:C.bg,borderRadius:12,width:tb?42:34,height:tb?42:34,display:'flex',alignItems:'center',justifyContent:'center',fontSize:tb?18:14}}>✏️</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── APP ─── */
+function App(){
+  const [role,setRole]=useState(null);const [view,setView]=useState('splash');
+  const [vdata,setVdata]=useState(null);const [hist,setHist]=useState([]);
+  function nav(v,d=null){setHist(h=>[...h,{view,data:vdata}]);setView(v);setVdata(d);}
+  function back(){if(!hist.length)return;const p=hist[hist.length-1];setHist(h=>h.slice(0,-1));setView(p.view);setVdata(p.data);}
+  function selectRole(r){setRole(r);setView('dash');}
+  function changeRole(r){setRole(r);}
+  return(
+    <div style={{height:'100vh',overflow:'hidden',background:C.bg}}>
+      {view==='splash'&&<Splash onSelect={selectRole}/>}
+      {view==='dash'&&<Dashboard role={role} onNav={nav}/>}
+      {view==='learn'&&<LearnMode onBack={back} onNav={nav}/>}
+      {view==='lcat'&&<LearnCat cat={vdata} onBack={back} onNav={nav}/>}
+      {view==='lgame'&&<LearnGame cat={vdata} onBack={back}/>}
+      {view==='firstthen'&&<FirstThen onBack={back}/>}
+      {view==='miniworld'&&<MiniWorld onBack={back} onNav={nav}/>}
+      {view==='room'&&<Room room={vdata} onBack={back}/>}
+      {view==='upload'&&<Upload role={role} onBack={back}/>}
+      {view==='datanotes'&&<DataNotes role={role} onBack={back}/>}
+      {view==='timer'&&<TimerTool onBack={back}/>}
+      {view==='goals'&&<Goals role={role} onBack={back}/>}
+      {view==='settings'&&<Settings role={role} onBack={back} onRoleChange={changeRole}/>}
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
