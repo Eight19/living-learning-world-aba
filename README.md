@@ -1,17 +1,32 @@
-# 🌍 Living Learning World
+# 🃏 TherapyDeck
 
-An ABA-powered learning app for RBTs, BCBAs, parents, and teachers 
-working with children ages 2–10.
+**Digital ABA Materials · Built for RBTs**
 
-## Features
-- 📖 Learn Mode — 11 categories with real photos, Grid & Flashcard views
-- 🎯 Game Mode — Tacting and Listener Responding
-- 📋 First / Then visual schedules with timer
-- 🏠 Mini World — explore rooms and learn object names
-- 📊 Data Notes — frequency, duration, and session notes
-- ⏱️ Timer — countdown with visual ring
-- 🎯 Goals tracker
-- 📷 Custom content upload
+A free, browser-based tool that replaces physical ABA materials — 
+key tags, laminated cards, visual schedules, and PECS boards — 
+with a fast, personalized digital session toolkit.
 
-## Live App
-👉 [Open the app](https://eight19.github.io/living-learning-world-aba)
+## 🔗 Live App
+👉 [Open TherapyDeck](https://eight19.github.io/living-learning-world-aba)
+
+---
+
+## 🎴 Session Programs
+
+| Program | Description |
+|---|---|
+| **DTT** | Discrete Trial Training — card & grid view with photo replacement |
+| **Receptive ID** | Find the ___ — 4-choice listener responding, 10 trials |
+| **Tacting** | What is this? — expressive labeling, word choices |
+| **Visual Schedule** | First/Then board + full daily activity strip |
+| **PECS / Manding** | Custom request board — tap to say "I want ___" |
+| **Imitation** | Motor & verbal imitation prompt cards |
+| **VI Timer** | Variable interval reinforcement timer (VI 1–10) |
+| **Choice Board** | Personalized reinforcer menu, 2/3/4 column layout |
+
+---
+
+## 📚 Library
+
+- 📹 **Videos** — 24 curated therapy YouTube videos (circle time, movement, learning songs, calming)
+- 🎵 **Music** — Nursery rhymes, focus music, transit
