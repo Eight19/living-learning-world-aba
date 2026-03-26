@@ -1593,42 +1593,48 @@ function Library({onBack}){
   const [playingId,setPlayingId]=useState(null);
   const [readingBook,setReadingBook]=useState(null);
 
+  // ─── VIDEO LIBRARY ─────────────────────────────────────
+  // IDs use youtube-nocookie.com embeds for fewer restrictions
+  // If a video still won't embed, the "Open in YouTube" button
+  // always works as a reliable fallback.
+  // To replace a video: find its YouTube URL, copy the ID
+  // (the part after ?v= or after youtu.be/) and paste it below.
   const videoLibrary=[
     {section:'Circle Time',items:[
-      {id:'v1',title:'Hello Song',channel:'Super Simple Songs',ytId:'tVlcKp3bWH8',emoji:'👋'},
-      {id:'v2',title:'Good Morning Song',channel:'Jack Hartmann',ytId:'CuCPSuv5uPc',emoji:'🌅'},
-      {id:'v3',title:'Days of the Week',channel:'Have Fun Teaching',ytId:'Yk1LqhJzMQ4',emoji:'📅'},
-      {id:'v4',title:'Calendar Time',channel:'Jack Hartmann',ytId:'SRLpOAWtPq0',emoji:'🗓️'},
-      {id:'v5',title:'Weather Song',channel:'Super Simple Songs',ytId:'9ynDeNhQ7DM',emoji:'🌤️'},
+      {id:'v1', title:'Hello Song',           channel:'Super Simple Songs', ytId:'tVlcKp3bWH8', emoji:'👋'},
+      {id:'v2', title:'Good Morning Song',    channel:'Jack Hartmann',      ytId:'CuCPSuv5uPc', emoji:'🌅'},
+      {id:'v3', title:'Days of the Week',     channel:'Have Fun Teaching',  ytId:'Yk1LqhJzMQ4', emoji:'📅'},
+      {id:'v4', title:'The Calendar Song',    channel:'Jack Hartmann',      ytId:'EKRChBkiGD4', emoji:'🗓️'},
+      {id:'v5', title:'How\'s the Weather',   channel:'Super Simple Songs', ytId:'9ynDeNhQ7DM', emoji:'🌤️'},
     ]},
     {section:'Movement & Brain Breaks',items:[
-      {id:'v6',title:'Freeze Dance',channel:'GoNoodle',ytId:'wOL_IkNGPbM',emoji:'🕺'},
-      {id:'v7',title:'Jump & Wiggle',channel:'Cosmic Kids',ytId:'bM_L0WHjMqA',emoji:'🏃'},
-      {id:'v8',title:'Body Boogie',channel:'Jack Hartmann',ytId:'5RM4jHdtzbc',emoji:'💃'},
-      {id:'v9',title:'Simon Says',channel:'Super Simple Songs',ytId:'dNsMn0zguRI',emoji:'🙌'},
-      {id:'v10',title:'Animal Moves',channel:'GoNoodle',ytId:'mnt-U-JJmhU',emoji:'🐾'},
+      {id:'v6', title:'Head Shoulders Knees', channel:'Super Simple Songs', ytId:'ZanHgPprl-0', emoji:'🕺'},
+      {id:'v7', title:'If You\'re Happy',     channel:'Super Simple Songs', ytId:'71hqRT9U0wg', emoji:'😊'},
+      {id:'v8', title:'Jumping & Counting',   channel:'Jack Hartmann',      ytId:'k6SI4jHNEHs', emoji:'⬆️'},
+      {id:'v9', title:'The Hokey Pokey',      channel:'Super Simple Songs', ytId:'iZinb4c7HvE', emoji:'🙌'},
+      {id:'v10',title:'Body Parts Song',      channel:'Super Simple Songs', ytId:'ZanHgPprl-0', emoji:'🐾'},
     ]},
     {section:'Learning — Numbers',items:[
-      {id:'v11',title:'Count to 10',channel:'Super Simple Songs',ytId:'1jW5tMsgrbs',emoji:'🔢'},
-      {id:'v12',title:'Count to 100',channel:'Jack Hartmann',ytId:'0TgLtF3PMOc',emoji:'💯'},
-      {id:'v13',title:'Number Song 1-20',channel:'Kids TV 123',ytId:'D0Ajq682yrA',emoji:'📊'},
-      {id:'v14',title:'Counting by 2s',channel:'Jack Hartmann',ytId:'s2Y9aEKjvmA',emoji:'✌️'},
+      {id:'v11',title:'Count to 10',          channel:'Super Simple Songs', ytId:'1jW5tMsgrbs', emoji:'🔢'},
+      {id:'v12',title:'Ten Little Numbers',   channel:'Super Simple Songs', ytId:'y4BHnEBmkDw', emoji:'🔟'},
+      {id:'v13',title:'Count to 20',          channel:'Jack Hartmann',      ytId:'D0Ajq682yrA', emoji:'📊'},
+      {id:'v14',title:'Count by 2s',          channel:'Jack Hartmann',      ytId:'s2Y9aEKjvmA', emoji:'✌️'},
     ]},
     {section:'Learning — Alphabet',items:[
-      {id:'v15',title:'ABC Song',channel:'Super Simple Songs',ytId:'AZ-hGNgBuBQ',emoji:'🔤'},
-      {id:'v16',title:'Phonics Song',channel:'Kids TV 123',ytId:'BELlZKpi1Zs',emoji:'📢'},
-      {id:'v17',title:'Letter Sounds',channel:'Jack Hartmann',ytId:'0s9wTvOMjCo',emoji:'🗣️'},
+      {id:'v15',title:'ABC Song',             channel:'Super Simple Songs', ytId:'AZ-hGNgBuBQ', emoji:'🔤'},
+      {id:'v16',title:'Phonics Song',         channel:'Kids TV 123',        ytId:'BELlZKpi1Zs', emoji:'📢'},
+      {id:'v17',title:'Letter Sounds A-Z',    channel:'Jack Hartmann',      ytId:'0s9wTvOMjCo', emoji:'🗣️'},
     ]},
     {section:'Learning — Colors & Shapes',items:[
-      {id:'v18',title:'Colors Song',channel:'Super Simple Songs',ytId:'OmG3gGCQJpM',emoji:'🎨'},
-      {id:'v19',title:'Shapes Song',channel:'Kids TV 123',ytId:'ywy8_GnKFkM',emoji:'⬡'},
-      {id:'v20',title:'Colors of the Rainbow',channel:'Super Simple Songs',ytId:'6aQI09J6yYI',emoji:'🌈'},
+      {id:'v18',title:'Colors Song',          channel:'Super Simple Songs', ytId:'OmG3gGCQJpM', emoji:'🎨'},
+      {id:'v19',title:'Shapes Song',          channel:'Super Simple Songs', ytId:'ywy8_GnKFkM', emoji:'⬡'},
+      {id:'v20',title:'Rainbow Colors',       channel:'Super Simple Songs', ytId:'6aQI09J6yYI', emoji:'🌈'},
     ]},
     {section:'Calming & Transitions',items:[
-      {id:'v21',title:'Clean Up Song',channel:'Super Simple Songs',ytId:'cHbLBbHMRHY',emoji:'🧹'},
-      {id:'v22',title:'Take a Deep Breath',channel:'Cosmic Kids',ytId:'RVA2N6tX2cg',emoji:'😮‍💨'},
-      {id:'v23',title:'Calm Down Time',channel:'GoNoodle',ytId:'_mZbzDOpylA',emoji:'😌'},
-      {id:'v24',title:'Goodbye Song',channel:'Super Simple Songs',ytId:'qq23hljHkDk',emoji:'👋'},
+      {id:'v21',title:'Clean Up Song',        channel:'Super Simple Songs', ytId:'cHbLBbHMRHY', emoji:'🧹'},
+      {id:'v22',title:'Breathe With Me',      channel:'Cosmic Kids Yoga',   ytId:'RVA2N6tX2cg', emoji:'😮‍💨'},
+      {id:'v23',title:'Take a Deep Breath',   channel:'GoNoodle',           ytId:'ihwcw_oA-9A', emoji:'😌'},
+      {id:'v24',title:'Goodbye Song',         channel:'Super Simple Songs', ytId:'qq23hljHkDk', emoji:'👋'},
     ]},
   ];
 
@@ -1688,22 +1694,41 @@ function Library({onBack}){
                   <div style={{display:'grid',gridTemplateColumns:tb?'repeat(3,1fr)':'1fr',gap:10}}>
                     {section.items.map(item=>(
                       <div key={item.id} style={{background:T.card,borderRadius:14,border:`1px solid ${T.border}`,overflow:'hidden'}}>
+                        {/* Embed player — uses youtube-nocookie.com for fewer restrictions */}
                         {playingId===item.id?(
-                          <div style={{position:'relative',paddingBottom:'56.25%',background:'#000'}}>
-                            <iframe style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}} src={`https://www.youtube.com/embed/${item.ytId}?autoplay=1`} allow="autoplay;encrypted-media" allowFullScreen/>
+                          <div>
+                            <div style={{position:'relative',paddingBottom:'56.25%',background:'#000'}}>
+                              <iframe
+                                style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
+                                src={`https://www.youtube-nocookie.com/embed/${item.ytId}?autoplay=1&rel=0&modestbranding=1`}
+                                allow="autoplay; encrypted-media; picture-in-picture"
+                                allowFullScreen
+                                title={item.title}
+                              />
+                            </div>
+                            {/* Controls row under embed */}
+                            <div style={{display:'flex',gap:0,borderTop:`1px solid ${T.border}`}}>
+                              <button onClick={()=>setPlayingId(null)} style={{flex:1,padding:'10px',fontWeight:700,fontSize:13,color:T.rose,background:T.card}}>⏹ Stop</button>
+                              <div style={{width:1,background:T.border}}/>
+                              <button onClick={()=>window.open(`https://www.youtube.com/watch?v=${item.ytId}`,'_blank')} style={{flex:1,padding:'10px',fontWeight:700,fontSize:13,color:T.indigo,background:T.card}}>▶ Open in YouTube</button>
+                            </div>
                           </div>
                         ):(
-                          <button onClick={()=>setPlayingId(item.id)} style={{width:'100%',background:'transparent',display:'flex',alignItems:'center',gap:14,padding:tb?'14px 16px':'12px 14px',cursor:'pointer',textAlign:'left'}}>
-                            <div style={{width:48,height:48,borderRadius:12,background:`${T.indigo}20`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0,border:`1px solid ${T.indigo}30`}}>{item.emoji}</div>
-                            <div style={{flex:1,minWidth:0}}>
-                              <p style={{fontWeight:700,fontSize:14,color:T.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.title}</p>
-                              <p style={{fontSize:12,color:T.muted,marginTop:2}}>{item.channel||item.artist}</p>
+                          <div>
+                            <button onClick={()=>setPlayingId(item.id)} style={{width:'100%',background:'transparent',display:'flex',alignItems:'center',gap:14,padding:tb?'14px 16px':'12px 14px',cursor:'pointer',textAlign:'left'}}>
+                              <div style={{width:48,height:48,borderRadius:12,background:`${T.indigo}20`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0,border:`1px solid ${T.indigo}30`}}>{item.emoji}</div>
+                              <div style={{flex:1,minWidth:0}}>
+                                <p style={{fontWeight:700,fontSize:14,color:T.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.title}</p>
+                                <p style={{fontSize:12,color:T.muted,marginTop:2}}>{item.channel||item.artist}</p>
+                              </div>
+                              <div style={{width:36,height:36,borderRadius:10,background:T.indigo,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:16,color:'white'}}>▶</div>
+                            </button>
+                            {/* Always-visible YouTube fallback */}
+                            <div style={{borderTop:`1px solid ${T.border}`,padding:'8px 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                              <span style={{fontSize:11,color:T.dimmed}}>Video won't load?</span>
+                              <button onClick={()=>window.open(`https://www.youtube.com/watch?v=${item.ytId}`,'_blank')} style={{background:`${T.indigo}18`,borderRadius:8,padding:'5px 12px',fontWeight:700,fontSize:12,color:T.indigo,border:`1px solid ${T.indigo}30`}}>Open in YouTube ↗</button>
                             </div>
-                            <div style={{width:36,height:36,borderRadius:10,background:T.indigo,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:16,color:'white'}}>▶</div>
-                          </button>
-                        )}
-                        {playingId===item.id&&(
-                          <button onClick={()=>setPlayingId(null)} style={{width:'100%',padding:'10px',fontWeight:700,fontSize:13,color:T.rose,background:T.card,borderTop:`1px solid ${T.border}`}}>⏹ Stop</button>
+                          </div>
                         )}
                       </div>
                     ))}
