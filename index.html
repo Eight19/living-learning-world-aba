@@ -1588,223 +1588,389 @@ function CardDecks({onBack,onNav}){
 // ═══════════════════════════════════════════════════════════
 //  LIBRARY (YouTube videos, music, books)
 // ═══════════════════════════════════════════════════════════
-function Library({onBack}){
+// ═══════════════════════════════════════════════════════════
+//  LIBRARY
+//  ─────────────────────────────────────────────────────────
+//  Videos & Music: paste any YouTube URL to save it
+//  Books: paste any Epic!/Storyline Online/YouTube URL
+//  All custom content saves to localStorage on this device
+//  ─────────────────────────────────────────────────────────
+//  localStorage keys:
+//    td_lib_videos  — custom video entries
+//    td_lib_music   — custom music entries
+//    td_lib_books   — custom book entries
+// ═══════════════════════════════════════════════════════════
+
+const LS_LIB_VIDEOS = 'td_lib_videos_v1';
+const LS_LIB_MUSIC  = 'td_lib_music_v1';
+const LS_LIB_BOOKS  = 'td_lib_books_v1';
+
+// ─── EXTRACT YOUTUBE ID FROM ANY URL ────────────────────
+function extractYTId(url){
+  try{
+    const u=new URL(url.trim());
+    if(u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0];
+    if(u.hostname.includes('youtube.com')) return u.searchParams.get('v')||'';
+  }catch(e){}
+  // fallback: grab 11-char ID pattern
+  const m=url.match(/[?&v=\/]([A-Za-z0-9_-]{11})/);
+  return m?m[1]:'';
+}
+
+// ─── BUILT-IN STARTER VIDEOS ────────────────────────────
+// These are verified-embeddable Super Simple Songs & Jack Hartmann
+// videos. RBTs can delete any of these and add their own.
+const BUILTIN_VIDEOS=[
+  {id:'bv1', title:'Hello Song',          cat:'Circle Time',          ytId:'tVlcKp3bWH8', builtin:true},
+  {id:'bv2', title:'Good Morning Song',   cat:'Circle Time',          ytId:'CuCPSuv5uPc', builtin:true},
+  {id:'bv3', title:'Days of the Week',    cat:'Circle Time',          ytId:'Yk1LqhJzMQ4', builtin:true},
+  {id:'bv4', title:'Head Shoulders Song', cat:'Movement & Brain Breaks', ytId:'ZanHgPprl-0', builtin:true},
+  {id:'bv5', title:'If You\'re Happy',    cat:'Movement & Brain Breaks', ytId:'71hqRT9U0wg', builtin:true},
+  {id:'bv6', title:'Hokey Pokey',         cat:'Movement & Brain Breaks', ytId:'iZinb4c7HvE', builtin:true},
+  {id:'bv7', title:'ABC Song',            cat:'Alphabet & Phonics',   ytId:'AZ-hGNgBuBQ', builtin:true},
+  {id:'bv8', title:'Phonics Song',        cat:'Alphabet & Phonics',   ytId:'BELlZKpi1Zs', builtin:true},
+  {id:'bv9', title:'Count to 10',         cat:'Numbers & Counting',   ytId:'1jW5tMsgrbs', builtin:true},
+  {id:'bv10',title:'Ten Little Numbers',  cat:'Numbers & Counting',   ytId:'y4BHnEBmkDw', builtin:true},
+  {id:'bv11',title:'Colors Song',         cat:'Colors & Shapes',      ytId:'OmG3gGCQJpM', builtin:true},
+  {id:'bv12',title:'Shapes Song',         cat:'Colors & Shapes',      ytId:'ywy8_GnKFkM', builtin:true},
+  {id:'bv13',title:'Clean Up Song',       cat:'Calming & Transitions', ytId:'cHbLBbHMRHY', builtin:true},
+  {id:'bv14',title:'Take a Deep Breath',  cat:'Calming & Transitions', ytId:'RVA2N6tX2cg', builtin:true},
+  {id:'bv15',title:'Goodbye Song',        cat:'Calming & Transitions', ytId:'qq23hljHkDk', builtin:true},
+  {id:'bv16',title:'Wheels on the Bus',   cat:'Therapy Favorites',    ytId:'e_04ZrNroTo', builtin:true},
+  {id:'bv17',title:'Twinkle Twinkle',     cat:'Therapy Favorites',    ytId:'yCjJyiqpAuU', builtin:true},
+  {id:'bv18',title:'Old MacDonald',       cat:'Therapy Favorites',    ytId:'_6HzoUcx3eo', builtin:true},
+];
+
+const BUILTIN_MUSIC=[
+  {id:'bm1', title:'Wheels on the Bus',         cat:'Therapy Favorites',     ytId:'e_04ZrNroTo', builtin:true},
+  {id:'bm2', title:'Twinkle Twinkle Little Star',cat:'Therapy Favorites',    ytId:'yCjJyiqpAuU', builtin:true},
+  {id:'bm3', title:'Itsy Bitsy Spider',          cat:'Therapy Favorites',    ytId:'l4WNrvVjiTw', builtin:true},
+  {id:'bm4', title:'If You\'re Happy & Know It', cat:'Reinforcement Songs',  ytId:'71hqRT9U0wg', builtin:true},
+  {id:'bm5', title:'Good Job Song',              cat:'Reinforcement Songs',  ytId:'k0T4pRJaB_A', builtin:true},
+  {id:'bm6', title:'You Did It!',                cat:'Reinforcement Songs',  ytId:'4S9a6V8zBxY', builtin:true},
+  {id:'bm7', title:'Clean Up Song',              cat:'Calming & Transitions',ytId:'cHbLBbHMRHY', builtin:true},
+  {id:'bm8', title:'Calm Focus (Instrumental)',  cat:'Calming & Transitions',ytId:'jfKfPfyJRdk', builtin:true},
+  {id:'bm9', title:'Hello Song',                 cat:'Circle Time',          ytId:'tVlcKp3bWH8', builtin:true},
+  {id:'bm10',title:'Good Morning!',              cat:'Circle Time',          ytId:'CuCPSuv5uPc', builtin:true},
+];
+
+// ─── BUILTIN BOOK SUGGESTIONS ────────────────────────────
+// RBTs replace these with their own links
+const BUILTIN_BOOKS=[
+  {id:'bb1', title:'Storyline Online',       cat:'Storytime',   url:'https://www.storylineonline.net', emoji:'📖', desc:'Free celebrity read-alouds with illustrations', builtin:true},
+  {id:'bb2', title:'Epic! Free Books',       cat:'Storytime',   url:'https://www.getepic.com',         emoji:'📚', desc:'Thousands of illustrated children\'s books',   builtin:true},
+  {id:'bb3', title:'Open Library Children\'s',cat:'Storytime',  url:'https://openlibrary.org/subjects/children', emoji:'🌟', desc:'Free illustrated classic children\'s books', builtin:true},
+  {id:'bb4', title:'International Children\'s Digital Library', cat:'Storytime', url:'http://en.childrenslibrary.org', emoji:'🌍', desc:'Illustrated books in many languages', builtin:true},
+  {id:'bb5', title:'Unite for Literacy',     cat:'Storytime',   url:'https://www.uniteforliteracy.com', emoji:'🔤', desc:'Free narrated picture books for early readers', builtin:true},
+  {id:'bb6', title:'MagicKeys Children\'s Books', cat:'Storytime', url:'http://www.magickeys.com/books', emoji:'🔑', desc:'Illustrated stories for young children',     builtin:true},
+];
+
+const VIDEO_CATS=['Circle Time','Movement & Brain Breaks','Alphabet & Phonics','Numbers & Counting','Colors & Shapes','Storytime','Calming & Transitions','Reinforcement Songs','Therapy Favorites'];
+const BOOK_CATS =['Storytime','Alphabet & Phonics','Numbers & Counting','Colors & Shapes','Calming & Transitions','Therapy Favorites'];
+
+// ─── ADD ITEM MODAL ──────────────────────────────────────
+function AddItemModal({type,cats,onSave,onClose}){
   const tb=useW()>=768;
-  const [tab,setTab]=useState('videos');
-  const [playingId,setPlayingId]=useState(null);
-  const [readingBook,setReadingBook]=useState(null);
+  const [url,setUrl]=useState('');
+  const [title,setTitle]=useState('');
+  const [cat,setCat]=useState(cats[0]);
+  const [emoji,setEmoji]=useState(type==='book'?'📖':'🎬');
+  const [err,setErr]=useState('');
 
-  // ─── VIDEO LIBRARY ─────────────────────────────────────
-  // IDs use youtube-nocookie.com embeds for fewer restrictions
-  // If a video still won't embed, the "Open in YouTube" button
-  // always works as a reliable fallback.
-  // To replace a video: find its YouTube URL, copy the ID
-  // (the part after ?v= or after youtu.be/) and paste it below.
-  const videoLibrary=[
-    {section:'Circle Time',items:[
-      {id:'v1', title:'Hello Song',           channel:'Super Simple Songs', ytId:'tVlcKp3bWH8', emoji:'👋'},
-      {id:'v2', title:'Good Morning Song',    channel:'Jack Hartmann',      ytId:'CuCPSuv5uPc', emoji:'🌅'},
-      {id:'v3', title:'Days of the Week',     channel:'Have Fun Teaching',  ytId:'Yk1LqhJzMQ4', emoji:'📅'},
-      {id:'v4', title:'The Calendar Song',    channel:'Jack Hartmann',      ytId:'EKRChBkiGD4', emoji:'🗓️'},
-      {id:'v5', title:'How\'s the Weather',   channel:'Super Simple Songs', ytId:'9ynDeNhQ7DM', emoji:'🌤️'},
-    ]},
-    {section:'Movement & Brain Breaks',items:[
-      {id:'v6', title:'Head Shoulders Knees', channel:'Super Simple Songs', ytId:'ZanHgPprl-0', emoji:'🕺'},
-      {id:'v7', title:'If You\'re Happy',     channel:'Super Simple Songs', ytId:'71hqRT9U0wg', emoji:'😊'},
-      {id:'v8', title:'Jumping & Counting',   channel:'Jack Hartmann',      ytId:'k6SI4jHNEHs', emoji:'⬆️'},
-      {id:'v9', title:'The Hokey Pokey',      channel:'Super Simple Songs', ytId:'iZinb4c7HvE', emoji:'🙌'},
-      {id:'v10',title:'Body Parts Song',      channel:'Super Simple Songs', ytId:'ZanHgPprl-0', emoji:'🐾'},
-    ]},
-    {section:'Learning — Numbers',items:[
-      {id:'v11',title:'Count to 10',          channel:'Super Simple Songs', ytId:'1jW5tMsgrbs', emoji:'🔢'},
-      {id:'v12',title:'Ten Little Numbers',   channel:'Super Simple Songs', ytId:'y4BHnEBmkDw', emoji:'🔟'},
-      {id:'v13',title:'Count to 20',          channel:'Jack Hartmann',      ytId:'D0Ajq682yrA', emoji:'📊'},
-      {id:'v14',title:'Count by 2s',          channel:'Jack Hartmann',      ytId:'s2Y9aEKjvmA', emoji:'✌️'},
-    ]},
-    {section:'Learning — Alphabet',items:[
-      {id:'v15',title:'ABC Song',             channel:'Super Simple Songs', ytId:'AZ-hGNgBuBQ', emoji:'🔤'},
-      {id:'v16',title:'Phonics Song',         channel:'Kids TV 123',        ytId:'BELlZKpi1Zs', emoji:'📢'},
-      {id:'v17',title:'Letter Sounds A-Z',    channel:'Jack Hartmann',      ytId:'0s9wTvOMjCo', emoji:'🗣️'},
-    ]},
-    {section:'Learning — Colors & Shapes',items:[
-      {id:'v18',title:'Colors Song',          channel:'Super Simple Songs', ytId:'OmG3gGCQJpM', emoji:'🎨'},
-      {id:'v19',title:'Shapes Song',          channel:'Super Simple Songs', ytId:'ywy8_GnKFkM', emoji:'⬡'},
-      {id:'v20',title:'Rainbow Colors',       channel:'Super Simple Songs', ytId:'6aQI09J6yYI', emoji:'🌈'},
-    ]},
-    {section:'Calming & Transitions',items:[
-      {id:'v21',title:'Clean Up Song',        channel:'Super Simple Songs', ytId:'cHbLBbHMRHY', emoji:'🧹'},
-      {id:'v22',title:'Breathe With Me',      channel:'Cosmic Kids Yoga',   ytId:'RVA2N6tX2cg', emoji:'😮‍💨'},
-      {id:'v23',title:'Take a Deep Breath',   channel:'GoNoodle',           ytId:'ihwcw_oA-9A', emoji:'😌'},
-      {id:'v24',title:'Goodbye Song',         channel:'Super Simple Songs', ytId:'qq23hljHkDk', emoji:'👋'},
-    ]},
-  ];
+  const isBook=type==='book';
 
-  const musicLibrary=[
-    {section:'Therapy Favorites',items:[
-      {id:'m1',title:'Wheels on the Bus',artist:'Classic',emoji:'🚌',ytId:'e_04ZrNroTo'},
-      {id:'m2',title:'If You\'re Happy',artist:'Classic',emoji:'😊',ytId:'71hqRT9U0wg'},
-      {id:'m3',title:'Old MacDonald',artist:'Classic',emoji:'🐄',ytId:'_6HzoUcx3eo'},
-      {id:'m4',title:'Twinkle Twinkle',artist:'Classic',emoji:'⭐',ytId:'yCjJyiqpAuU'},
-      {id:'m5',title:'Head Shoulders',artist:'Classic',emoji:'🦾',ytId:'ZanHgPprl-0'},
-      {id:'m6',title:'The Itsy Bitsy Spider',artist:'Classic',emoji:'🕷️',ytId:'l4WNrvVjiTw'},
-      {id:'m7',title:'Row Row Your Boat',artist:'Classic',emoji:'🚣',ytId:'YzTqLQjFG4Y'},
-      {id:'m8',title:'Mary Had a Little Lamb',artist:'Classic',emoji:'🐑',ytId:'NG68pMCGC3Y'},
-    ]},
-    {section:'Focus & Work Music',items:[
-      {id:'m9',title:'Calm Focus Music (No Lyrics)',artist:'Instrumental',emoji:'🧠',ytId:'jfKfPfyJRdk'},
-      {id:'m10',title:'Kids Focus Music',artist:'Instrumental',emoji:'📚',ytId:'1ZYbU82GVz4'},
-      {id:'m11',title:'Soft Background Music',artist:'Instrumental',emoji:'🎵',ytId:'hlWiI4xVXKY'},
-    ]},
-    {section:'Transition Songs',items:[
-      {id:'m12',title:'Clean Up Clean Up',artist:'Classic',emoji:'🧹',ytId:'cHbLBbHMRHY'},
-      {id:'m13',title:'Time to Go',artist:'Transition Song',emoji:'⏱️',ytId:'qq23hljHkDk'},
-      {id:'m14',title:'Good Job Song',artist:'Reinforcement',emoji:'🏆',ytId:'k0T4pRJaB_A'},
-    ]},
-  ];
+  function validate(){
+    if(!title.trim()){setErr('Please enter a title');return false;}
+    if(!url.trim()){setErr('Please enter a URL or link');return false;}
+    if(!isBook){
+      const ytId=extractYTId(url);
+      if(!ytId){setErr('Could not find a YouTube video ID in that link. Paste the full YouTube URL.');return false;}
+    }
+    try{new URL(url.trim());}catch(e){setErr('Please enter a valid URL (starting with https://)');return false;}
+    return true;
+  }
 
-  const bookLibrary=[
-    {id:'b1',title:'The Tale of Peter Rabbit',author:'Beatrix Potter',emoji:'🐰',gutenbergId:14838,pages:['Once upon a time there were four little Rabbits, and their names were— Flopsy, Mopsy, Cotton-tail, and Peter.','They lived with their Mother in a sand-bank, underneath the root of a very big fir tree.','\'Now, my dears,\' said old Mrs. Rabbit one morning, \'you may go into the fields or down the lane, but don\'t go into Mr. McGregor\'s garden.\'','Peter, who was very naughty, ran straight away to Mr. McGregor\'s garden and squeezed under the gate!','Mr. McGregor was on his hands and knees planting young cabbages, but he jumped up and ran after Peter.','Peter was very frightened; he rushed all over the garden, for he had forgotten the way back to the gate.','He lost one of his shoes among the cabbages, and the other shoe amongst the potatoes.','After losing his shoes, he ran on four legs and went faster, so that I think he might have got away altogether if he had not unfortunately run into a gooseberry net.','Peter got away and ran into the tool-shed. He jumped into a can full of water. It would have been a beautiful thing to hide in, if it had not had so much water in it.','Peter ran home and his mother put him to bed and gave him chamomile tea. But Flopsy, Mopsy, and Cotton-tail had bread and milk and blackberries for supper.','The End! 🐰']},
-    {id:'b2',title:'The Velveteen Rabbit',author:'Margery Williams',emoji:'🐇',pages:['There was once a velveteen rabbit, and in the beginning he was really splendid. He was fat and bunchy, as a rabbit should be.','For a long time he lived in the toy cupboard, and no one thought very much about him.','Then one Christmas morning, the boy found the rabbit, and from that day on they became friends.','\"What is REAL?\" asked the Rabbit one day. \"Does it mean having things that buzz inside you?\"\n\"Real isn\'t how you are made,\" said the Skin Horse. \"It\'s a thing that happens to you.\"','\"Does it hurt?\" asked the Rabbit.\n\"Sometimes,\" said the Skin Horse. \"But when you are Real, you don\'t mind being hurt.\"','The Rabbit loved the boy deeply, and the boy loved the Rabbit. They played together every day.','Then the boy got sick, and the doctor said all his old toys must be burned. The Rabbit was very sad.','But a fairy came and said: \"I can make you Real — not just to the boy, but to everyone!\" And she kissed him.','He was no longer a toy — he had become a Real rabbit at last!','And every spring the boy saw a rabbit in the garden who winked at him, and somehow he looked familiar. The End! 🐇']},
-    {id:'b3',title:'Three Billy Goats Gruff',author:'Traditional',emoji:'🐐',pages:['Once upon a time there were three billy goats named Gruff who wanted to cross a bridge to eat the sweet grass on the other side.','But under the bridge lived a mean, ugly Troll!','First the smallest Billy Goat Gruff walked across. \"Who\'s that trip-trapping over my bridge?\" roared the Troll.\n\"It\'s only me, the tiny Billy Goat Gruff!\"','\"I\'m going to eat you up!\" said the Troll.\n\"Oh please don\'t! Wait for my bigger brother — he\'s much tastier!\" The Troll let him pass.','Then the middle Billy Goat Gruff crossed. \"Who\'s that trip-trapping?\"\n\"It\'s me, the middle Billy Goat Gruff! Wait for my BIG brother!\" The troll let him pass too.','Then the BIG Billy Goat Gruff came — TRIP TRAP TRIP TRAP — shaking the whole bridge!','\"I\'m going to eat you up!\" roared the Troll.\n\"Come on then!\" said the big goat. He butted the Troll with his great horns and tossed him into the river!','And the three Billy Goats Gruff ate the sweet green grass all summer long. Snip snap snout, this tale is told out! 🐐']},
-    {id:'b4',title:'Goldilocks and the Three Bears',author:'Traditional',emoji:'🐻',pages:['Once upon a time, a girl named Goldilocks went for a walk in the forest and came upon a cottage.','She knocked on the door, but nobody was home, so she went inside.','In the kitchen there were three bowls of porridge. She tasted the first — too hot! The second — too cold! The third — just right! She ate it all up.','Then she found three chairs. The first was too hard. The second was too soft. The third was just right — but she sat so hard she broke it!','Upstairs were three beds. The first was too hard. The second was too soft. The third was just right, and she fell fast asleep.','While she slept, the three bears came home.\n\"Someone\'s been eating my porridge!\" said Papa Bear.\n\"Mine too!\" said Mama Bear.\n\"Mine\'s all gone!\" cried Baby Bear.','\"Someone\'s been sleeping in MY bed — and she\'s STILL here!\" cried Baby Bear.','Goldilocks woke up, saw the three bears, screamed, and ran out of the house as fast as her legs could carry her. The End! 🐻']},
-    {id:'b5',title:'Little Red Riding Hood',author:'Traditional',emoji:'🧣',pages:['Once upon a time there was a little girl who always wore a red hooded cloak. Everyone called her Little Red Riding Hood.','One day her mother said: \"Take this basket of goodies to grandmother\'s house. Stay on the path!\"','In the forest, she met a wolf. \"Where are you going, little girl?\" he asked.\n\"To grandmother\'s house!\" she said.','The wolf ran ahead and gobbled up grandmother, then dressed in her clothes and got in her bed.','When Red Riding Hood arrived, she noticed something odd.\n\"Grandmother, what big eyes you have!\"\n\"All the better to see you with, my dear!\"','\"What big teeth you have!\"\n\"All the better to EAT you with!\" The wolf jumped up!','But a woodcutter passing by heard the commotion and rushed in, chasing the wolf away.','Grandmother was safe, and they all had a lovely visit together. Red Riding Hood never talked to strangers in the forest again! The End! 🧣']},
-    {id:'b6',title:'The Ugly Duckling',author:'Hans Christian Andersen',emoji:'🦢',pages:['A mother duck was sitting on her nest waiting for her eggs to hatch.','One by one they hatched — but the last egg was huge. The duckling that came out was big and gray and ugly.','\"You don\'t look like my other ducklings,\" said Mother Duck. Still, she loved him.','The other animals laughed and pecked at the ugly duckling. He was very sad and ran away.','He spent the cold winter alone, hiding among the reeds, cold and lonely.','When spring came, some beautiful birds flew overhead — white swans with golden beaks!','The ugly duckling looked at his reflection in the water — and gasped! He was no longer gray and clumsy. He had become a beautiful swan!','The other swans welcomed him and said he was the most beautiful of all. And he was happy at last. The End! 🦢']},
-  ];
+  function save(){
+    if(!validate())return;
+    const ytId=isBook?null:extractYTId(url);
+    onSave({
+      id:`custom-${Date.now()}-${Math.random()}`,
+      title:title.trim(),
+      cat,
+      emoji,
+      url:url.trim(),
+      ytId:ytId||null,
+      builtin:false,
+      addedOn:new Date().toLocaleDateString(),
+    });
+  }
+
+  const EMOJIS=isBook
+    ?['📖','📚','🌟','🔤','🎨','🐾','🦁','🐰','🌈','🧩','✏️','🎭']
+    :['🎬','🎵','🎮','📚','🌈','⭕','🏃','🎨','🗣️','🔢','🔤','😊'];
 
   return(
-    <div style={{height:'100dvh',display:'flex',flexDirection:'column'}}>
-      <Hdr title="📚 Library" onBack={onBack} color={T.indigo}/>
-      <div style={{display:'flex',background:T.card,borderBottom:`1px solid ${T.border}`,padding:'8px 16px',gap:6}}>
-        {[{id:'videos',label:'📹 Videos'},{id:'music',label:'🎵 Music'},{id:'books',label:'📖 Books'}].map(t=>(
-          <button key={t.id} onClick={()=>{setTab(t.id);setPlayingId(null);setReadingBook(null);}} style={{flex:1,padding:'10px 0',borderRadius:10,fontWeight:700,fontSize:14,background:tab===t.id?T.indigo:'transparent',color:tab===t.id?'white':T.muted,transition:'all .2s'}}>{t.label}</button>
-        ))}
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',display:'flex',alignItems:'flex-end',zIndex:200}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div style={{background:T.card,borderRadius:'24px 24px 0 0',padding:tb?'28px 32px':'20px 18px',width:'100%',display:'flex',flexDirection:'column',gap:16,animation:'slideUp .3s ease',maxHeight:'90dvh',overflowY:'auto'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <p style={{fontWeight:800,fontSize:18,color:T.text}}>Add {isBook?'Book Link':'Video'}</p>
+          <button onClick={onClose} style={{fontSize:22,color:T.muted,padding:'4px 8px'}}>✕</button>
+        </div>
+
+        {/* Emoji picker */}
+        <div>
+          <p style={{fontSize:11,fontWeight:700,color:T.muted,marginBottom:8,letterSpacing:1,textTransform:'uppercase'}}>Icon</p>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            {EMOJIS.map(e=>(
+              <button key={e} onClick={()=>setEmoji(e)} style={{width:40,height:40,borderRadius:10,background:emoji===e?T.indigo:T.card2,fontSize:20,border:`1px solid ${emoji===e?T.indigo:T.border}`,transition:'all .15s'}}>{e}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Title */}
+        <div>
+          <p style={{fontSize:11,fontWeight:700,color:T.muted,marginBottom:7,letterSpacing:1,textTransform:'uppercase'}}>Title *</p>
+          <input value={title} onChange={e=>{setTitle(e.target.value);setErr('');}} placeholder={isBook?'e.g. The Very Hungry Caterpillar':'e.g. Counting Song'} style={{width:'100%',background:T.card2,border:`1px solid ${T.border}`,borderRadius:12,padding:'12px 16px',fontSize:15,fontWeight:600,color:T.text,outline:'none'}}/>
+        </div>
+
+        {/* URL */}
+        <div>
+          <p style={{fontSize:11,fontWeight:700,color:T.muted,marginBottom:7,letterSpacing:1,textTransform:'uppercase'}}>{isBook?'Book URL (Epic!, Storyline Online, etc.) *':'YouTube URL *'}</p>
+          <input value={url} onChange={e=>{setUrl(e.target.value);setErr('');}} placeholder={isBook?'https://www.storylineonline.net/...':'https://www.youtube.com/watch?v=...'} style={{width:'100%',background:T.card2,border:`1px solid ${err?T.rose:T.border}`,borderRadius:12,padding:'12px 16px',fontSize:14,fontWeight:500,color:T.text,outline:'none'}}/>
+          {!isBook&&<p style={{fontSize:11,color:T.dimmed,marginTop:5}}>Paste any YouTube link — full URL or youtu.be shortlink</p>}
+          {isBook&&<p style={{fontSize:11,color:T.dimmed,marginTop:5}}>Paste the full URL of any free book site. It will open full-screen inside the app.</p>}
+        </div>
+
+        {/* Category */}
+        <div>
+          <p style={{fontSize:11,fontWeight:700,color:T.muted,marginBottom:8,letterSpacing:1,textTransform:'uppercase'}}>Category</p>
+          <div style={{display:'flex',gap:7,flexWrap:'wrap'}}>
+            {cats.map(c=>(
+              <button key={c} onClick={()=>setCat(c)} style={{background:cat===c?T.indigo:T.card2,color:cat===c?'white':T.muted,borderRadius:9,padding:'7px 14px',fontWeight:700,fontSize:12,border:`1px solid ${cat===c?T.indigo:T.border}`,transition:'all .15s'}}>{c}</button>
+            ))}
+          </div>
+        </div>
+
+        {err&&<p style={{fontSize:13,color:T.rose,fontWeight:600}}>⚠️ {err}</p>}
+
+        <button onClick={save} style={{background:'linear-gradient(135deg,#6366F1,#A855F7)',color:'white',borderRadius:14,padding:'15px 0',fontWeight:800,fontSize:16}}>Save to Library ✓</button>
       </div>
+    </div>
+  );
+}
 
-      {/* Reading mode */}
-      {readingBook&&(
-        <BookReader book={readingBook} onClose={()=>setReadingBook(null)}/>
-      )}
-
-      {!readingBook&&(
-        <div style={{flex:1,overflowY:'auto',padding:tb?'16px 24px':12}}>
-          {(tab==='videos'||tab==='music')&&(
-            <div style={{display:'flex',flexDirection:'column',gap:20}}>
-              {(tab==='videos'?videoLibrary:musicLibrary).map(section=>(
-                <div key={section.section}>
-                  <p style={{fontSize:11,fontWeight:700,color:T.muted,marginBottom:12,letterSpacing:1.5,textTransform:'uppercase'}}>{section.section}</p>
-                  <div style={{display:'grid',gridTemplateColumns:tb?'repeat(3,1fr)':'1fr',gap:10}}>
-                    {section.items.map(item=>(
-                      <div key={item.id} style={{background:T.card,borderRadius:14,border:`1px solid ${T.border}`,overflow:'hidden'}}>
-                        {/* Embed player — uses youtube-nocookie.com for fewer restrictions */}
-                        {playingId===item.id?(
-                          <div>
-                            <div style={{position:'relative',paddingBottom:'56.25%',background:'#000'}}>
-                              <iframe
-                                style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
-                                src={`https://www.youtube-nocookie.com/embed/${item.ytId}?autoplay=1&rel=0&modestbranding=1`}
-                                allow="autoplay; encrypted-media; picture-in-picture"
-                                allowFullScreen
-                                title={item.title}
-                              />
-                            </div>
-                            {/* Controls row under embed */}
-                            <div style={{display:'flex',gap:0,borderTop:`1px solid ${T.border}`}}>
-                              <button onClick={()=>setPlayingId(null)} style={{flex:1,padding:'10px',fontWeight:700,fontSize:13,color:T.rose,background:T.card}}>⏹ Stop</button>
-                              <div style={{width:1,background:T.border}}/>
-                              <button onClick={()=>window.open(`https://www.youtube.com/watch?v=${item.ytId}`,'_blank')} style={{flex:1,padding:'10px',fontWeight:700,fontSize:13,color:T.indigo,background:T.card}}>▶ Open in YouTube</button>
-                            </div>
-                          </div>
-                        ):(
-                          <div>
-                            <button onClick={()=>setPlayingId(item.id)} style={{width:'100%',background:'transparent',display:'flex',alignItems:'center',gap:14,padding:tb?'14px 16px':'12px 14px',cursor:'pointer',textAlign:'left'}}>
-                              <div style={{width:48,height:48,borderRadius:12,background:`${T.indigo}20`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0,border:`1px solid ${T.indigo}30`}}>{item.emoji}</div>
-                              <div style={{flex:1,minWidth:0}}>
-                                <p style={{fontWeight:700,fontSize:14,color:T.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.title}</p>
-                                <p style={{fontSize:12,color:T.muted,marginTop:2}}>{item.channel||item.artist}</p>
-                              </div>
-                              <div style={{width:36,height:36,borderRadius:10,background:T.indigo,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:16,color:'white'}}>▶</div>
-                            </button>
-                            {/* Always-visible YouTube fallback */}
-                            <div style={{borderTop:`1px solid ${T.border}`,padding:'8px 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                              <span style={{fontSize:11,color:T.dimmed}}>Video won't load?</span>
-                              <button onClick={()=>window.open(`https://www.youtube.com/watch?v=${item.ytId}`,'_blank')} style={{background:`${T.indigo}18`,borderRadius:8,padding:'5px 12px',fontWeight:700,fontSize:12,color:T.indigo,border:`1px solid ${T.indigo}30`}}>Open in YouTube ↗</button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {tab==='books'&&(
-            <div>
-              <p style={{fontSize:12,color:T.muted,marginBottom:16,lineHeight:1.6}}>Classic public domain stories with built-in read-aloud. Tap a book to open it, then use the 🔊 button on each page.</p>
-              <div style={{display:'grid',gridTemplateColumns:tb?'repeat(3,1fr)':'1fr',gap:12}}>
-                {bookLibrary.map((book,i)=>(
-                  <button key={book.id} onClick={()=>setReadingBook(book)} style={{background:T.card,borderRadius:16,padding:tb?'20px 18px':'16px 14px',display:'flex',alignItems:'center',gap:14,border:`1px solid ${T.border}`,animation:`fadeUp .3s ease ${i*.06}s both`,textAlign:'left',cursor:'pointer',transition:'all .2s'}}
-                    onMouseEnter={e=>e.currentTarget.style.borderColor=T.indigo}
-                    onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
-                    <div style={{width:56,height:56,borderRadius:14,background:`${T.indigo}20`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:30,flexShrink:0,border:`1px solid ${T.indigo}30`}}>{book.emoji}</div>
-                    <div>
-                      <p style={{fontWeight:700,fontSize:15,color:T.text}}>{book.title}</p>
-                      <p style={{fontSize:12,color:T.muted,marginTop:2}}>by {book.author}</p>
-                      <p style={{fontSize:11,color:T.dimmed,marginTop:2}}>{book.pages.length} pages · Read aloud ✓</p>
-                    </div>
-                  </button>
-                ))}
+// ─── VIDEO / MUSIC CARD ──────────────────────────────────
+function MediaCard({item,onDelete,showDelete}){
+  const [playing,setPlaying]=useState(false);
+  const tb=useW()>=768;
+  return(
+    <div style={{background:T.card,borderRadius:14,border:`1px solid ${T.border}`,overflow:'hidden',position:'relative'}}>
+      {playing?(
+        <div>
+          <div style={{position:'relative',paddingBottom:'56.25%',background:'#000'}}>
+            <iframe style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
+              src={`https://www.youtube-nocookie.com/embed/${item.ytId}?autoplay=1&rel=0&modestbranding=1`}
+              allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen title={item.title}/>
+          </div>
+          <div style={{display:'flex',borderTop:`1px solid ${T.border}`}}>
+            <button onClick={()=>setPlaying(false)} style={{flex:1,padding:'10px',fontWeight:700,fontSize:13,color:T.rose,background:T.card}}>⏹ Stop</button>
+            <div style={{width:1,background:T.border}}/>
+            <button onClick={()=>window.open(`https://www.youtube.com/watch?v=${item.ytId}`,'_blank')} style={{flex:1,padding:'10px',fontWeight:700,fontSize:13,color:T.indigoL,background:T.card}}>▶ Open in YouTube</button>
+          </div>
+        </div>
+      ):(
+        <div>
+          <button onClick={()=>setPlaying(true)} style={{width:'100%',background:'transparent',display:'flex',alignItems:'center',gap:14,padding:tb?'14px 16px':'12px 14px',cursor:'pointer',textAlign:'left'}}>
+            <div style={{width:46,height:46,borderRadius:12,background:`${T.indigo}20`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0,border:`1px solid ${T.indigo}30`}}>{item.emoji||'🎬'}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontWeight:700,fontSize:14,color:T.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.title}</p>
+              <div style={{display:'flex',gap:6,marginTop:3,alignItems:'center'}}>
+                <span style={{background:`${T.indigo}20`,color:T.indigoL,borderRadius:6,padding:'1px 7px',fontSize:11,fontWeight:600}}>{item.cat}</span>
+                {!item.builtin&&<span style={{fontSize:11,color:T.dimmed}}>Custom</span>}
               </div>
             </div>
-          )}
-          <div style={{height:8}}/>
+            <div style={{width:36,height:36,borderRadius:10,background:T.indigo,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:16,color:'white'}}>▶</div>
+          </button>
+          <div style={{borderTop:`1px solid ${T.border}`,padding:'7px 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <span style={{fontSize:11,color:T.dimmed}}>Won't load?</span>
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              <button onClick={()=>window.open(`https://www.youtube.com/watch?v=${item.ytId}`,'_blank')} style={{background:`${T.indigo}18`,borderRadius:7,padding:'4px 11px',fontWeight:700,fontSize:11,color:T.indigoL,border:`1px solid ${T.indigo}30`}}>Open in YouTube ↗</button>
+              {showDelete&&<button onClick={()=>onDelete(item.id)} style={{background:`${T.rose}18`,borderRadius:7,padding:'4px 10px',fontWeight:700,fontSize:11,color:T.rose,border:`1px solid ${T.rose}30`}}>🗑️</button>}
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-// ─── BOOK READER ─────────────────────────────────────────
-function BookReader({book,onClose}){
-  const [page,setPage]=useState(0);
-  const [autoRead,setAutoRead]=useState(false);
-  const [fontSize,setFontSize]=useState(20);
+// ─── BOOK VIEWER (full-screen iframe) ───────────────────
+function BookViewer({book,onClose}){
   const tb=useW()>=768;
-  const autoRef=useRef(null);
+  const [loaded,setLoaded]=useState(false);
+  return(
+    <div style={{position:'fixed',inset:0,background:T.bg,zIndex:300,display:'flex',flexDirection:'column'}}>
+      <div style={{display:'flex',alignItems:'center',padding:tb?'12px 20px':'10px 14px',background:T.card,borderBottom:`1px solid ${T.border}`,gap:12,flexShrink:0}}>
+        <button onClick={onClose} style={{background:T.card2,borderRadius:10,padding:'8px 14px',fontWeight:700,fontSize:13,color:T.muted,border:`1px solid ${T.border}`,flexShrink:0}}>← Back</button>
+        <span style={{fontWeight:700,fontSize:tb?16:14,color:T.text,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{book.emoji} {book.title}</span>
+        <button onClick={()=>window.open(book.url,'_blank')} style={{background:`${T.indigo}20`,borderRadius:10,padding:'8px 14px',fontWeight:700,fontSize:12,color:T.indigoL,border:`1px solid ${T.indigo}30`,flexShrink:0}}>Open in Browser ↗</button>
+      </div>
+      {!loaded&&(
+        <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center',zIndex:1}}>
+          <div style={{width:40,height:40,borderRadius:'50%',border:`3px solid ${T.indigo}`,borderTopColor:'transparent',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}/>
+          <p style={{color:T.muted,fontSize:13,fontWeight:600}}>Loading book...</p>
+        </div>
+      )}
+      <iframe
+        src={book.url}
+        style={{flex:1,border:'none',background:T.bg,opacity:loaded?1:0,transition:'opacity .3s'}}
+        onLoad={()=>setLoaded(true)}
+        title={book.title}
+        allow="fullscreen"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+      />
+    </div>
+  );
+}
 
-  function readPage(){speak(book.pages[page],0.78);}
-  function advance(dir){
-    const next=page+dir;
-    if(next<0||next>=book.pages.length)return;
-    setPage(next);
-    window.speechSynthesis.cancel();
-    if(autoRead)setTimeout(()=>speak(book.pages[next],0.78),400);
+// ─── MAIN LIBRARY ────────────────────────────────────────
+function Library({onBack}){
+  const tb=useW()>=768;
+  const [tab,setTab]=useState('videos');
+  const [catFilter,setCatFilter]=useState('All');
+  const [adding,setAdding]=useState(false);
+  const [viewingBook,setViewingBook]=useState(null);
+
+  // Custom entries saved to localStorage
+  const [customVideos,setCustomVideos]=useState(()=>{
+    try{const s=localStorage.getItem(LS_LIB_VIDEOS);return s?JSON.parse(s):[];}catch(e){return[];}
+  });
+  const [customMusic,setCustomMusic]=useState(()=>{
+    try{const s=localStorage.getItem(LS_LIB_MUSIC);return s?JSON.parse(s):[];}catch(e){return[];}
+  });
+  const [customBooks,setCustomBooks]=useState(()=>{
+    try{const s=localStorage.getItem(LS_LIB_BOOKS);return s?JSON.parse(s):[];}catch(e){return[];}
+  });
+
+  // Deleted built-in IDs
+  const [deletedBuiltins,setDeletedBuiltins]=useState(()=>{
+    try{const s=localStorage.getItem('td_deleted_builtins');return s?JSON.parse(s):[];}catch(e){return[];}
+  });
+
+  function saveCustomVideos(arr){setCustomVideos(arr);try{localStorage.setItem(LS_LIB_VIDEOS,JSON.stringify(arr));}catch(e){}}
+  function saveCustomMusic(arr){setCustomMusic(arr);try{localStorage.setItem(LS_LIB_MUSIC,JSON.stringify(arr));}catch(e){}}
+  function saveCustomBooks(arr){setCustomBooks(arr);try{localStorage.setItem(LS_LIB_BOOKS,JSON.stringify(arr));}catch(e){}}
+  function markBuiltinDeleted(id){
+    const upd=[...deletedBuiltins,id];
+    setDeletedBuiltins(upd);
+    try{localStorage.setItem('td_deleted_builtins',JSON.stringify(upd));}catch(e){}
   }
-  useEffect(()=>{if(autoRead)readPage();},[autoRead,page]);
-  useEffect(()=>{return()=>window.speechSynthesis.cancel();},[]);
+
+  function addItem(item){
+    if(tab==='videos'){saveCustomVideos([item,...customVideos]);}
+    else if(tab==='music'){saveCustomMusic([item,...customMusic]);}
+    else{saveCustomBooks([item,...customBooks]);}
+    setAdding(false);
+  }
+
+  function deleteItem(id,isBuiltin){
+    if(isBuiltin){markBuiltinDeleted(id);return;}
+    if(tab==='videos'){saveCustomVideos(customVideos.filter(x=>x.id!==id));}
+    else if(tab==='music'){saveCustomMusic(customMusic.filter(x=>x.id!==id));}
+    else{saveCustomBooks(customBooks.filter(x=>x.id!==id));}
+  }
+
+  // Merge builtin + custom, filter out deleted builtins
+  const allVideos=[...BUILTIN_VIDEOS.filter(v=>!deletedBuiltins.includes(v.id)),...customVideos];
+  const allMusic=[...BUILTIN_MUSIC.filter(m=>!deletedBuiltins.includes(m.id)),...customMusic];
+  const allBooks=[...BUILTIN_BOOKS.filter(b=>!deletedBuiltins.includes(b.id)),...customBooks];
+
+  const currentList=tab==='videos'?allVideos:tab==='music'?allMusic:allBooks;
+  const currentCats=tab==='books'?BOOK_CATS:VIDEO_CATS;
+  const filtered=catFilter==='All'?currentList:currentList.filter(i=>i.cat===catFilter);
+
+  // Unique cats present in current list
+  const presentCats=['All',...[...new Set(currentList.map(i=>i.cat))]];
 
   return(
-    <div style={{flex:1,display:'flex',flexDirection:'column',background:T.bg}}>
-      <div style={{display:'flex',alignItems:'center',padding:tb?'14px 24px':'12px 16px',background:T.card,borderBottom:`1px solid ${T.border}`,gap:12}}>
-        <button onClick={()=>{window.speechSynthesis.cancel();onClose();}} style={{background:T.card2,borderRadius:10,padding:'8px 14px',fontWeight:700,fontSize:13,color:T.muted,border:`1px solid ${T.border}`}}>← Back</button>
-        <span style={{fontWeight:700,fontSize:tb?16:14,color:T.text,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{book.emoji} {book.title}</span>
-        <span style={{fontSize:13,color:T.muted,fontWeight:600}}>{page+1}/{book.pages.length}</span>
+    <div style={{height:'100dvh',display:'flex',flexDirection:'column'}}>
+      {viewingBook&&<BookViewer book={viewingBook} onClose={()=>setViewingBook(null)}/>}
+      {adding&&<AddItemModal type={tab==='books'?'book':'video'} cats={currentCats} onSave={addItem} onClose={()=>setAdding(false)}/>}
+
+      <Hdr title="📚 Library" onBack={onBack} color={T.indigo}
+        right={
+          <button onClick={()=>setAdding(true)} style={{background:'linear-gradient(135deg,#6366F1,#A855F7)',color:'white',borderRadius:11,padding:tb?'10px 18px':'8px 14px',fontWeight:700,fontSize:tb?14:12,display:'flex',alignItems:'center',gap:6}}>＋ Add {tab==='books'?'Book':'Video'}</button>
+        }/>
+
+      {/* Tab row */}
+      <div style={{display:'flex',background:T.card,borderBottom:`1px solid ${T.border}`,padding:'8px 16px',gap:6}}>
+        {[{id:'videos',label:'📹 Videos'},{id:'music',label:'🎵 Music'},{id:'books',label:'📖 Books'}].map(t=>(
+          <button key={t.id} onClick={()=>{setTab(t.id);setCatFilter('All');}} style={{flex:1,padding:'10px 0',borderRadius:10,fontWeight:700,fontSize:14,background:tab===t.id?T.indigo:'transparent',color:tab===t.id?'white':T.muted,transition:'all .2s'}}>{t.label}</button>
+        ))}
       </div>
-      <div style={{flex:1,overflowY:'auto',padding:tb?'32px 48px':'20px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:tb?32:20}}>
-        <div style={{background:T.card,borderRadius:24,padding:tb?'40px 48px':'24px 20px',maxWidth:680,width:'100%',border:`1px solid ${T.border}`,boxShadow:`0 8px 40px rgba(0,0,0,.3)`,minHeight:tb?240:180,display:'flex',alignItems:'center',justifyContent:'center',animation:'fadeIn .3s ease'}}>
-          <p style={{fontSize:fontSize,color:T.text,lineHeight:1.7,textAlign:'center',fontWeight:500,whiteSpace:'pre-line'}}>{book.pages[page]}</p>
-        </div>
-        <div style={{display:'flex',gap:10,flexWrap:'wrap',justifyContent:'center'}}>
-          <button onClick={readPage} style={{background:T.indigo,color:'white',borderRadius:12,padding:tb?'12px 24px':'10px 18px',fontWeight:700,fontSize:tb?15:13}}>🔊 Read Aloud</button>
-          <button onClick={()=>setAutoRead(a=>!a)} style={{background:autoRead?T.teal:`${T.teal}20`,color:autoRead?'white':T.teal,borderRadius:12,padding:tb?'12px 22px':'10px 16px',fontWeight:700,fontSize:tb?14:12,border:`1px solid ${T.teal}40`}}>{autoRead?'⏸ Auto Off':'▶ Auto Read'}</button>
-          <button onClick={()=>setFontSize(f=>Math.min(f+2,30))} style={{background:T.card2,borderRadius:12,padding:tb?'12px 16px':'10px 14px',fontWeight:700,fontSize:14,color:T.muted,border:`1px solid ${T.border}`}}>A+</button>
-          <button onClick={()=>setFontSize(f=>Math.max(f-2,14))} style={{background:T.card2,borderRadius:12,padding:tb?'12px 16px':'10px 14px',fontWeight:700,fontSize:14,color:T.muted,border:`1px solid ${T.border}`}}>A-</button>
-        </div>
+
+      {/* Category filter */}
+      <div style={{background:T.card,borderBottom:`1px solid ${T.border}`,padding:'8px 14px',overflowX:'auto',display:'flex',gap:7,flexShrink:0}}>
+        {presentCats.map(c=>(
+          <button key={c} onClick={()=>setCatFilter(c)} style={{background:catFilter===c?T.indigo:T.card2,color:catFilter===c?'white':T.muted,borderRadius:8,padding:'6px 13px',fontWeight:700,fontSize:12,border:`1px solid ${catFilter===c?T.indigo:T.border}`,transition:'all .15s',whiteSpace:'nowrap',flexShrink:0}}>{c}</button>
+        ))}
       </div>
-      <div style={{display:'flex',gap:12,padding:tb?'16px 48px':'12px 16px',background:T.card,borderTop:`1px solid ${T.border}`}}>
-        <button onClick={()=>advance(-1)} disabled={page===0} style={{flex:1,background:page===0?T.card2:T.card,borderRadius:14,padding:tb?'16px 0':'14px 0',fontWeight:800,fontSize:22,color:page===0?T.dimmed:T.text,border:`1px solid ${T.border}`}}>←</button>
-        <button onClick={()=>advance(1)} disabled={page>=book.pages.length-1} style={{flex:1,background:page>=book.pages.length-1?T.card2:T.indigo,color:'white',borderRadius:14,padding:tb?'16px 0':'14px 0',fontWeight:800,fontSize:22,opacity:page>=book.pages.length-1?.5:1}}>→</button>
+
+      {/* Content */}
+      <div style={{flex:1,overflowY:'auto',padding:tb?'16px 24px':12}}>
+
+        {/* Help banner */}
+        <div style={{background:T.card,borderRadius:14,padding:'12px 16px',border:`1px solid ${T.indigo}30`,marginBottom:16,display:'flex',gap:10,alignItems:'flex-start'}}>
+          <span style={{fontSize:16,flexShrink:0}}>💡</span>
+          <p style={{fontSize:12,color:T.muted,lineHeight:1.6}}>
+            {tab==='books'
+              ?<><strong style={{color:T.text}}>Tap any book</strong> to open it full-screen inside the app. Tap <strong style={{color:T.text}}>＋ Add Book</strong> to save any free book site — paste the URL from Epic!, Storyline Online, or any other source.</>
+              :<><strong style={{color:T.text}}>Tap ▶ to play</strong> in-app, or <strong style={{color:T.text}}>Open in YouTube</strong> if the embed is blocked. Tap <strong style={{color:T.text}}>＋ Add Video</strong> to save any YouTube link to your library.</>
+            }
+          </p>
+        </div>
+
+        {filtered.length===0?(
+          <div style={{background:T.card,borderRadius:16,padding:'40px 20px',textAlign:'center',border:`1px dashed ${T.border}`}}>
+            <p style={{fontSize:32,marginBottom:10}}>{tab==='books'?'📖':'🎬'}</p>
+            <p style={{fontWeight:700,fontSize:15,color:T.muted}}>Nothing here yet</p>
+            <p style={{fontSize:12,color:T.dimmed,marginTop:6}}>Tap <strong style={{color:T.text}}>＋ Add {tab==='books'?'Book':'Video'}</strong> to get started</p>
+          </div>
+        ):(
+          tab==='books'?(
+            /* BOOKS — card grid */
+            <div style={{display:'grid',gridTemplateColumns:tb?'repeat(2,1fr)':'1fr',gap:12}}>
+              {filtered.map((book,i)=>(
+                <div key={book.id} style={{background:T.card,borderRadius:16,border:`1px solid ${T.border}`,overflow:'hidden',animation:`fadeUp .3s ease ${i*.05}s both`}}>
+                  <button onClick={()=>setViewingBook(book)} style={{width:'100%',display:'flex',alignItems:'center',gap:14,padding:tb?'18px 18px':'14px 14px',cursor:'pointer',textAlign:'left',background:'transparent'}}>
+                    <div style={{width:56,height:56,borderRadius:14,background:`${T.indigo}20`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,flexShrink:0,border:`1px solid ${T.indigo}30`}}>{book.emoji}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <p style={{fontWeight:700,fontSize:15,color:T.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{book.title}</p>
+                      <p style={{fontSize:12,color:T.muted,marginTop:2,lineHeight:1.4}}>{book.desc||book.cat}</p>
+                      <div style={{display:'flex',gap:6,marginTop:4,alignItems:'center'}}>
+                        <span style={{background:`${T.indigo}18`,color:T.indigoL,borderRadius:6,padding:'1px 7px',fontSize:11,fontWeight:600}}>{book.cat}</span>
+                        {!book.builtin&&<span style={{fontSize:11,color:T.dimmed}}>Custom · {book.addedOn}</span>}
+                      </div>
+                    </div>
+                    <div style={{width:36,height:36,borderRadius:10,background:T.indigo,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'white',flexShrink:0}}>▶</div>
+                  </button>
+                  <div style={{borderTop:`1px solid ${T.border}`,padding:'8px 18px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <button onClick={()=>window.open(book.url,'_blank')} style={{fontSize:12,color:T.indigoL,fontWeight:600}}>Open in Browser ↗</button>
+                    <button onClick={()=>deleteItem(book.id,book.builtin)} style={{background:`${T.rose}15`,borderRadius:7,padding:'5px 11px',fontWeight:700,fontSize:11,color:T.rose,border:`1px solid ${T.rose}28`}}>🗑️ Remove</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ):(
+            /* VIDEOS / MUSIC — list */
+            <div style={{display:'grid',gridTemplateColumns:tb?'repeat(2,1fr)':'1fr',gap:10}}>
+              {filtered.map(item=>(
+                <MediaCard key={item.id} item={item} showDelete={true} onDelete={id=>deleteItem(id,item.builtin)}/>
+              ))}
+            </div>
+          )
+        )}
+        <div style={{height:16}}/>
       </div>
     </div>
   );
